@@ -740,7 +740,7 @@ async function boot(){
   id:async()=>auth.currentUser?auth.currentUser.uid:null,
   email:()=>auth.currentUser?auth.currentUser.email:null,
   isOwner:async()=>{const u=auth.currentUser;if(!u)return false;try{const d=await F.getDoc(F.doc(fs,'meta/sahip'));return d.exists()&&d.data().uid===u.uid;}catch(e){return false;}},
-  hasOwner:async()=>{try{return (await F.getDoc(F.doc(fs,'meta/sahip'))).exists();}catch(e){return true;}},
+  hasOwner:async()=>{try{return (await F.getDoc(F.doc(fs,'meta/sahip'))).exists();}catch(e){console.warn('meta',e&&e.code);return null;}},
   onAuth:cb=>A.onAuthStateChanged(auth,cb),
   signIn:wrap(async(email,pw,rem)=>{await A.setPersistence(auth,rem?A.browserLocalPersistence:A.browserSessionPersistence);return A.signInWithEmailAndPassword(auth,email,pw);}),
   signUp:wrap(async(email,pw)=>{await A.setPersistence(auth,A.browserLocalPersistence);return A.createUserWithEmailAndPassword(auth,email,pw);}),
@@ -1572,7 +1572,7 @@ FORMS.reg=async()=>{const v=id=>($('#'+id).value||'').trim();
  if(pa<0||pa>120)E('f-pa','0–120 arası.');if(pg<0||pg>365)E('f-pg','0–365 arası.');
  if(errs.length){if(errs.some(x=>/^f-p[agk]$/.test(x[0]))){const d=$('#f-prev');if(d)d.open=true;}if(errs.some(x=>/^f-pw/.test(x[0]))){const d=$('#f-pwd');if(d)d.open=true;}fErr(errs);toast(errs.length===1?'Bir alanı kontrol et.':`${errs.length} alanı kontrol et.`,'err');return;}
  fErr([]);
- const btn=$('form[data-form="reg"] button[type=submit]');if(btn)btn.disabled=true;const now=new Date().toISOString();const th=await tcHash(tc);
+ const btn=$('form[data-form="reg"] button[type=submit]');if(btn)btn.disabled=true;const now=new Date().toISOString();const th=await tcHash(tc);if(S.hasOwner==null)S.hasOwner=await S.user.hasOwner();if(S.hasOwner==null){if(btn)btn.disabled=false;return toast('Veritabanına ulaşılamadı. Firebase kuralları yüklenmemiş olabilir.','err');}
  if(!S.uid){let ex=null;try{ex=await S.db.doc('tcmap/'+th).get();}catch(e){}if(ex&&ex.exists){if(btn)btn.disabled=false;fErr([['f-tc','Bu TC ile zaten kayıt var. Giriş yap ya da “Şifremi unuttum”u kullan.']]);return;}
   try{S.regPending=true;const cr=await S.user.signUp(mail,pw);S.uid=cr.user.uid;S.authEmail=mail;}catch(e){S.regPending=false;if(btn)btn.disabled=false;const c=e&&e.code;return fErr([[c==='auth/email-already-in-use'?'f-mail':c==='auth/weak-password'?'f-pw':'f-mail',c==='auth/email-already-in-use'?'Bu e-posta ile zaten bir hesap var.':c==='auth/weak-password'?'Şifre çok zayıf; en az 6 karakter.':c==='auth/invalid-email'?'E-posta geçersiz.':'Hesap açılamadı: '+(c||'bağlantı hatası')]]);}}
  const old=S.kayit[S.uid]||{};
@@ -1580,7 +1580,7 @@ FORMS.reg=async()=>{const v=id=>($('#'+id).value||'').trim();
  try{const oldTc=S.kisiMe&&S.kisiMe.tc;if(oldTc&&oldTc!==tc){try{await S.db.doc('tcmap/'+await tcHash(oldTc)).delete();}catch(e){}}if(!oldTc||oldTc!==tc)await S.db.doc('tcmap/'+th).set({u:S.uid,e:mail});
   await S.db.doc('kayit/'+S.uid).set(body);await S.db.doc('kisi/'+S.uid).set({tc,eposta:mail,tel:tn,guncelleme:now});
   if(S.hasOwner===false&&!S.owner){await S.db.doc('meta/sahip').set({uid:S.uid,at:now});S.owner=true;S.hasOwner=true;}}
- catch(e){console.warn(e);S.regPending=false;if(btn)btn.disabled=false;return toast(e&&e.code==='invalid_argument'?'Kaydedilemedi: izin yok.':'Kaydedilemedi, tekrar dene.','err');}
+ catch(e){console.warn(e);S.regPending=false;if(btn)btn.disabled=false;return toast(e&&e.code==='invalid_argument'?'Kaydedilemedi: veritabanı izin vermedi (Firebase kurallarını kontrol et).':'Kaydedilemedi, tekrar dene.','err');}
  if(pw&&hp){try{await S.user.updatePw(pw);}catch(e){if(e&&/recent-login/.test(e.code||''))toast('Şifre değişmedi: güvenlik için çıkış yapıp yeniden gir, sonra tekrar dene.','err');else toast('Şifre değiştirilemedi.','err');}}
  S.kisiMe={tc,eposta:mail,tel:tn,guncelleme:now};S.regPending=false;
  if(S.owner){try{if(!S.onay[S.uid])await S.db.doc('onay/'+S.uid).set({by:S.uid,at:now});if(!S.yetki.includes(S.uid))await S.db.doc('yetki/liste').set({uids:uniq(S.yetki.concat(S.uid))});}catch(e){console.warn(e);}}
@@ -1597,6 +1597,7 @@ FORMS.login=async()=>{const tc=($('#l-tc').value||'').replace(/\D/g,''),pw=$('#l
   await S.user.signIn(m.data().e,pw,rem);toast('Hoş geldin');if(route()!=='ana')location.hash='ana';}
  catch(e){const c=e&&(e.raw||e.code)||'';ferr(/invalid-credential|wrong-password|user-not-found/.test(c)?'TC kimlik numarası ya da şifre hatalı.':/too-many-requests/.test(c)?'Çok fazla deneme yapıldı; biraz sonra tekrar dene ya da şifreni sıfırla.':/network/.test(c)?'İnternet bağlantını kontrol et.':'Giriş yapılamadı ('+c+').');}
  if(btn)btn.disabled=false;};
+const ow_or=v=>v;
 async function tcHash(tc){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('asistan-portal:'+tc));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;const fn=A[el.dataset.act];if(!fn)return;e.preventDefault();try{const r=fn(el,e);if(r&&r.catch)r.catch(err=>{console.warn(err);toast('Bir şeyler ters gitti, tekrar dene.','err');});}catch(err){console.warn(err);toast('Bir şeyler ters gitti, tekrar dene.','err');}});
@@ -1624,7 +1625,7 @@ async function init(){render();drawWave();
  if(!db||!user){S.state='nodb';render();return;}S.db=db;S.user=user;
  user.onAuth(async u=>{unsubAll();S.uid=u?u.uid:null;S.authEmail=u?u.email:null;S.owner=false;
   if(!u){S.state='anon';S.hasOwner=await user.hasOwner();render();return;}
-  S.state='loading';render();{const ow=await user.isOwner();if(!S.owner)S.owner=ow;}S.hasOwner=true;S.state='ready';subscribeAll();render();});
+  S.state='loading';render();{const ow=await user.isOwner();if(!S.owner)S.owner=ow;}S.hasOwner=ow_or(await user.hasOwner());S.state='ready';subscribeAll();render();});
  setTimeout(()=>{if(S.state==='loading'){S.slow=true;render();}},12000);}
 init();
 })();
