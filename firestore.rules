@@ -1,0 +1,80 @@
+rules_version = '2';
+// Asistan Portal — Firestore güvenlik kuralları
+// Firebase Console → Firestore Database → Rules sekmesine olduğu gibi yapıştırıp "Publish"e basın.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signed()  { return request.auth != null; }
+    function me()      { return request.auth.uid; }
+    function sahip()   { return signed() && exists(/databases/$(database)/documents/meta/sahip)
+                                 && get(/databases/$(database)/documents/meta/sahip).data.uid == me(); }
+    function onayli()  { return signed() && (exists(/databases/$(database)/documents/onay/$(me())) || sahip()); }
+    function yetkili() { return sahip() || (onayli() && exists(/databases/$(database)/documents/yetki/liste)
+                                 && me() in get(/databases/$(database)/documents/yetki/liste).data.uids); }
+
+    // Portal sahibi: ilk kayıt olan kişi bir kez oluşturur, sonra değişmez.
+    match /meta/sahip {
+      allow read: if true;
+      allow create: if signed() && request.resource.data.uid == me();
+      allow update, delete: if false;
+    }
+
+    // TC → giriş e-postası eşlemesi (belge adı TC'nin özetidir). Sadece TC'yi bilen tek belgeyi okuyabilir; listelenemez.
+    match /tcmap/{h} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if signed() && request.resource.data.u == me();
+      allow update, delete: if signed() && (resource.data.u == me() || sahip());
+    }
+
+    // Herkese açık kayıt bilgisi (ad, kısa ad, görev, başlangıç, telefon)
+    match /kayit/{uid} {
+      allow read: if signed();
+      allow create, update: if signed() && (uid == me() || yetkili());
+      allow delete: if yetkili();
+    }
+
+    // Gizli kişi bilgisi (TC, e-posta, telefon): yalnızca kişinin kendisi ve portal sahibi
+    match /kisi/{uid} {
+      allow read: if signed() && (uid == me() || sahip());
+      allow write: if signed() && (uid == me() || sahip());
+    }
+
+    match /onay/{uid} {
+      allow read: if signed();
+      allow write: if yetkili();
+    }
+
+    match /yetki/liste {
+      allow read: if signed();
+      allow write: if sahip();
+    }
+
+    // Kişisel işlem karnesi: yalnızca kişinin kendisi
+    match /data/users/{uid}/{rest=**} {
+      allow read, write: if signed() && uid == me();
+    }
+
+    match /katilim/{uid} {
+      allow read: if onayli();
+      allow write: if onayli() && (uid == me() || yetkili());
+    }
+
+    match /takas/{id} {
+      allow read, create, update: if onayli();
+      allow delete: if yetkili();
+    }
+
+    match /izin/{id} {
+      allow read: if onayli();
+      allow create: if onayli() && request.resource.data.u == me();
+      allow update, delete: if onayli() && (resource.data.u == me() || yetkili());
+    }
+
+    // Listeler, duyurular, programlar, ayarlar: onaylılar okur, yetkililer yazar
+    match /{col}/{id} {
+      allow read: if onayli() && col in ['duyurular','nobet','haftalik','rotasyon','seminer','kongre','ayar','kadro','izdonem'];
+      allow write: if yetkili() && col in ['duyurular','nobet','haftalik','rotasyon','seminer','kongre','ayar','kadro','izdonem'];
+    }
+  }
+}
