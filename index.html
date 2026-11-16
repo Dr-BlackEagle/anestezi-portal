@@ -1574,7 +1574,7 @@ FORMS.reg=async()=>{const v=id=>($('#'+id).value||'').trim();
  fErr([]);
  const btn=$('form[data-form="reg"] button[type=submit]');if(btn)btn.disabled=true;const now=new Date().toISOString();const th=await tcHash(tc);if(S.hasOwner==null)S.hasOwner=await S.user.hasOwner();if(S.hasOwner==null){if(btn)btn.disabled=false;return toast('Veritabanına ulaşılamadı. Firebase kuralları yüklenmemiş olabilir.','err');}
  if(!S.uid){let ex=null;try{ex=await S.db.doc('tcmap/'+th).get();}catch(e){}if(ex&&ex.exists){if(btn)btn.disabled=false;fErr([['f-tc','Bu TC ile zaten kayıt var. Giriş yap ya da “Şifremi unuttum”u kullan.']]);return;}
-  try{S.regPending=true;const cr=await S.user.signUp(mail,pw);S.uid=cr.user.uid;S.authEmail=mail;}catch(e){S.regPending=false;if(btn)btn.disabled=false;const c=e&&e.code;return fErr([[c==='auth/email-already-in-use'?'f-mail':c==='auth/weak-password'?'f-pw':'f-mail',c==='auth/email-already-in-use'?'Bu e-posta ile zaten bir hesap var.':c==='auth/weak-password'?'Şifre çok zayıf; en az 6 karakter.':c==='auth/invalid-email'?'E-posta geçersiz.':'Hesap açılamadı: '+(c||'bağlantı hatası')]]);}}
+  try{S.regPending=true;let cr;try{cr=await S.user.signUp(mail,pw);}catch(e1){if(e1&&e1.code==='auth/email-already-in-use'){try{cr=await S.user.signIn(mail,pw,true);}catch(e2){throw {code:'auth/email-already-in-use'};}}else throw e1;}S.uid=cr.user.uid;S.authEmail=mail;}catch(e){S.regPending=false;if(btn)btn.disabled=false;const c=e&&e.code;return fErr([[c==='auth/email-already-in-use'?'f-mail':c==='auth/weak-password'?'f-pw':'f-mail',c==='auth/email-already-in-use'?'Bu e-posta ile zaten bir hesap var ve şifre uyuşmadı. O hesabı açarken kullandığın şifreyi yaz.':c==='auth/weak-password'?'Şifre çok zayıf; en az 6 karakter.':c==='auth/invalid-email'?'E-posta geçersiz.':'Hesap açılamadı: '+(c||'bağlantı hatası')]]);}}
  const old=S.kayit[S.uid]||{};
  const body={adSoyad:ad,kisaAd:kisa,unvan,baslangic:bas,tel:telFmt(tn),oncekiAy:pa,oncekiGun:pg,oncekiKurum:(pa||pg)?pk:'',kayitTarihi:old.kayitTarihi||now,guncelleme:now};
  try{const oldTc=S.kisiMe&&S.kisiMe.tc;if(oldTc&&oldTc!==tc){try{await S.db.doc('tcmap/'+await tcHash(oldTc)).delete();}catch(e){}}if(!oldTc||oldTc!==tc)await S.db.doc('tcmap/'+th).set({u:S.uid,e:mail});
@@ -1582,7 +1582,7 @@ FORMS.reg=async()=>{const v=id=>($('#'+id).value||'').trim();
   if(S.hasOwner===false&&!S.owner){await S.db.doc('meta/sahip').set({uid:S.uid,at:now});S.owner=true;S.hasOwner=true;}}
  catch(e){console.warn(e);S.regPending=false;if(btn)btn.disabled=false;return toast(e&&e.code==='invalid_argument'?'Kaydedilemedi: veritabanı izin vermedi (Firebase kurallarını kontrol et).':'Kaydedilemedi, tekrar dene.','err');}
  if(pw&&hp){try{await S.user.updatePw(pw);}catch(e){if(e&&/recent-login/.test(e.code||''))toast('Şifre değişmedi: güvenlik için çıkış yapıp yeniden gir, sonra tekrar dene.','err');else toast('Şifre değiştirilemedi.','err');}}
- S.kisiMe={tc,eposta:mail,tel:tn,guncelleme:now};S.regPending=false;
+ S.kisiMe={tc,eposta:mail,tel:tn,guncelleme:now};S.kayit[S.uid]=body;S.regPending=false;
  if(S.owner){try{if(!S.onay[S.uid])await S.db.doc('onay/'+S.uid).set({by:S.uid,at:now});if(!S.yetki.includes(S.uid))await S.db.doc('yetki/liste').set({uids:uniq(S.yetki.concat(S.uid))});}catch(e){console.warn(e);}}
  if(btn)btn.disabled=false;
  S.regDraft=null;const inSh=!$('#sheet').hidden;if(inSh){closeSheet();S.regDraft=null;}
