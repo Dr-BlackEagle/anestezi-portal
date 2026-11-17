@@ -70,6 +70,18 @@ service cloud.firestore {
       allow delete: if onayli() && (resource.data.u == me() || yetkili());
     }
 
+    // Kullanım izleme: herkes kendi oturumunu ve hareketini yazar, yalnızca portal sahibi okur
+    match /oturum/{uid} {
+      allow read: if sahip();
+      allow write: if signed() && uid == me();
+    }
+    match /hareket/{id} {
+      allow read: if sahip();
+      allow create: if signed() && request.resource.data.u == me();
+      allow update: if false;
+      allow delete: if sahip();
+    }
+
     match /takas/{id} {
       allow read, create, update: if onayli();
       allow delete: if yetkili();

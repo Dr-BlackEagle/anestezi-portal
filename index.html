@@ -657,6 +657,27 @@ input[type="search"]{border-radius:999px;border-color:var(--line)}
 #chat-fab[hidden]{display:none}
 #chat-fab svg{width:26px;height:26px}
 .ch-badge{position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#E8A800;color:#2E2207;font-size:12px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
+.stats.st3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.stats.st3 .stat{padding:0}
+.stats.st4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.on-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#1E9E57;margin-right:7px;vertical-align:1px;box-shadow:0 0 0 3px rgba(30,158,87,.18)}
+.live-dot{width:10px;height:10px;border-radius:50%;background:#1E9E57;animation:livep 1.6s ease-in-out infinite}
+@keyframes livep{0%,100%{box-shadow:0 0 0 0 rgba(30,158,87,.45)}50%{box-shadow:0 0 0 7px rgba(30,158,87,0)}}
+.dau{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;align-items:end;height:150px;padding-top:6px}
+.dau-c{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.dau-b{width:100%;max-width:18px;min-height:2px;background:var(--plum);border-radius:4px 4px 0 0}
+.dau-v{font-size:10.5px;font-weight:600;color:var(--ink-2);margin-bottom:3px}
+.dau-l{font-size:10.5px;color:var(--muted);margin-top:4px}
+.hbar{display:grid;grid-template-columns:minmax(0,118px) 1fr auto;gap:10px;align-items:center;padding:6px 0}
+.hbar-l{font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar-t{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.hbar-f{height:100%;background:var(--plum);border-radius:5px}
+.hbar-n{font-size:12.5px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.card.izl-l{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ink)}
+.izl-l .ti{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(30,158,87,.14);color:#16784A;flex-shrink:0}
+.izl-l .ti svg{width:22px;height:22px}
+.izl-go{margin-left:auto;color:var(--muted)}
+.izl-go svg{width:18px;height:18px}
 /* kayıt formu */
 .req-note{font-size:13px;color:var(--muted);margin:-2px 0 -4px}
 .ferr{font-size:12.5px;font-weight:500;color:var(--err-ink)}
@@ -864,6 +885,7 @@ const P={
  save:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3"/><path d="M8 21v-7h8v7"/>',
  chat:'<path d="M21 12a8 8 0 01-11.6 7.1L4 20.5l1.4-4.8A8 8 0 1121 12z"/><path d="M8.5 11h7M8.5 14.2h4.5"/>',
  send:'<path d="M4 12l16-8-6 16-2.6-6.4z"/><path d="M11.4 13.6L20 4"/>',
+ pulse:'<path d="M3 12h4l2-5 4 10 2-5h6"/>',
  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
  dl:'<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/>',
  alarm:'<circle cx="12" cy="13" r="7"/><path d="M12 9.5V13l2.5 1.5M5 4L2.5 6.5M19 4l2.5 2.5"/>',
@@ -888,7 +910,7 @@ const ic=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 
 /* ---------- durum ---------- */
 const S={state:'loading',db:null,user:null,uid:null,owner:false,viewOnly:false,slow:false,got:new Set(),lastRoute:null,
- kayit:{},onay:{},yetki:[],ayar:{},duyurular:{},nobet:{},haftalik:{},rotasyon:{},seminer:{},kongre:{},katilim:{},kadro:{uzmanlar:[]},kisi:{},kisiMe:null,dl:null,takas:{},izin:{},izdonem:{},sohbet:[],
+ kayit:{},onay:{},yetki:[],ayar:{},duyurular:{},nobet:{},haftalik:{},rotasyon:{},seminer:{},kongre:{},katilim:{},kadro:{uzmanlar:[]},kisi:{},kisiMe:null,dl:null,takas:{},izin:{},izdonem:{},sohbet:[],oturum:{},hareket:[],
  islem:null,islemLocal:null,islemSt:'',
  ui:{gTab:null,ay:null,uzAy:null,filtre:null,past:false,hTur:null,hHafta:null,hGun:null,rTab:'bu-ay',rKisi:null,rAy:null,kTab:'asistan',kAra:'',iTarih:null,semPast:false,konPast:false,kxF:'tumu',annI:0},
  imp:null,shareTxt:'',shareOpts:[]};
@@ -1021,7 +1043,7 @@ ${F('f-kisa','Listelerde geçen adın',`<input id="f-kisa" data-keep autocapital
 <div class="row2">${F('f-pa','Ay',`<input id="f-pa" data-keep type="number" inputmode="numeric" min="0" max="120" value="${esc(k&&k.oncekiAy?k.oncekiAy:'')}" placeholder="0">`)}${F('f-pg','Gün',`<input id="f-pg" data-keep type="number" inputmode="numeric" min="0" max="365" value="${esc(k&&k.oncekiGun?k.oncekiGun:'')}" placeholder="0">`)}</div>
 ${F('f-pk','Kurum',`<input id="f-pk" data-keep value="${esc(k?k.oncekiKurum||'':'')}" placeholder="Örn. NKÜ Anestezi">`)}</div></details>
 ${hp?`<details class="fs-d" id="f-pwd"><summary>Şifreyi değiştir <em>isteğe bağlı</em></summary><div class="fs-in">${PWF('f-pw','Yeni şifre','new-password','En az 6 karakter')}${PWF('f-pw2','Yeni şifre tekrar','new-password','Şifreyi tekrar yaz')}</div></details>`:`${PWF('f-pw','Şifre','new-password','En az 6 karakter')}${PWF('f-pw2','Şifre tekrar','new-password','Şifreyi tekrar yaz')}<p class="hint" style="margin-top:-8px">Giriş yaparken TC kimlik numaranı ve bu şifreyi kullanacaksın.</p>`}
-<div class="privacy">${ic('lock')}<span>TC kimlik numaranı ve e-postanı yalnızca sen ve portal sahibi görür; telefonun kadro listesinde görünür. Bilgiler bölümün istediği kişi listeleri için kullanılır. Şifren Google Firebase tarafından güvenle saklanır; kimse göremez.</span></div>
+<div class="privacy">${ic('lock')}<span>TC kimlik numaranı ve e-postanı yalnızca sen ve portal sahibi görür; telefonun kadro listesinde görünür. Bilgiler bölümün istediği kişi listeleri için kullanılır. Portalı ne zaman kullandığın (son görülme, açtığın bölümler) yöneticiye görünür. Şifren Google Firebase tarafından güvenle saklanır; kimse göremez.</span></div>
 <button class="btn block" type="submit">${!k?'Kaydol':!hp?'Kaydet':'Bilgilerimi güncelle'}</button></form>`;}
 function loginForm(){return `<form class="card form" data-form="login" novalidate>
 <p class="form-err" id="l-err" role="alert" hidden></p>
@@ -1258,6 +1280,7 @@ function vYonetim(){if(!yetkili())return {title:'Yönetici Paneli',body:'<div cl
  if(un.length)h+=`<section class="card"><div class="card-h"><h2>Kayıt olmayanlar</h2><span class="pill warn">${un.length}</span></div><p class="hint" style="margin-bottom:8px">Bu ayın rotasyon listesinde olup portala kayıt olmayan asistanlar.</p><div class="chips">${un.map(n=>`<span class="chip">${esc(n)}</span>`).join('')}</div></section>`;
  const ppl=appr.map(id=>[id,S.kayit[id]]).sort((a,b)=>(a[1].unvan==='uzman')-(b[1].unvan==='uzman')||String(a[1].adSoyad).localeCompare(String(b[1].adSoyad),'tr'));
  h+=`<section class="card"><div class="card-h"><h2>Kişiler ve yetkiler</h2><span class="pill">${S.yetki.length} yetkili</span></div><p class="hint" style="margin-bottom:6px">${S.owner?'Yetkililer listeleri, duyuruları ve programları düzenleyebilir, kayıtları onaylayabilir.':'Yetki vermeyi yalnızca portal sahibi yapabilir.'}</p><ul class="alist">${ppl.map(([id,k])=>{const y=S.yetki.includes(id);return `<li class="arow"><div class="arow-t"><b>${esc(k.adSoyad)}</b><small>${k.unvan==='uzman'?'Uzman':'Asistan'}${y?' · Yetkili':''}${id===S.uid?' · Sen':''}</small></div>${id!==S.uid?`<div class="arow-a">${S.owner?`<button class="btn sm ghost" data-act="yetToggle" data-id="${esc(id)}">${y?'Yetkiyi al':'Yetkili yap'}</button>`:''}${S.owner&&S.kisi[id]&&S.kisi[id].eposta?`<button class="btn sm ghost" data-act="pwReset" data-id="${esc(id)}">Şifre sıfırlama</button>`:''}<button class="btn sm danger" data-act="kayitSil" data-id="${esc(id)}">Çıkar</button></div>`:''}</li>`;}).join('')}</ul></section>`;
+ if(S.owner){const now=Date.now();const on=Object.values(S.oturum).filter(x=>now-x.son<150000).length;h+=`<a class="card izl-l" href="#izleme"><span class="ti">${ic('pulse')}</span><span class="arow-t"><b>Kullanım ve çevrimiçi</b><small>${on?`Şu an ${on} kişi çevrimiçi`:'Şu an kimse çevrimiçi değil'} · son görülme, hareketler</small></span><span class="izl-go">${ic('next')}</span></a>`;}
  h+=`<section class="card"><div class="card-h"><h2>Portal</h2></div><button class="btn block" data-act="rotSure" style="margin-bottom:8px">${ic('rotate')}Rotasyon süre listesini hazırla</button><p class="hint" style="margin:-2px 0 10px">Toplam asistanlık süresi kayıtlı başlangıç tarihlerinden bugüne göre hesaplanır; rotasyon süreleri Rotasyonlar'daki tablodan gelir.</p>${S.owner?`<div class="qacts" style="margin-bottom:8px">${S.dl?`<button class="btn ghost" data-act="bkSave">${ic('save')}Yedek al</button>`:''}<button class="btn ghost" data-act="bkLoad">${ic('upload')}Geri yükle</button></div><p class="hint" style="margin:-2px 0 10px">Yedek; kayıtları, listeleri, duyuruları, rotasyonları, değişimleri ve izinleri içerir. Kişisel işlem karneleri yalnızca sahibine açık olduğu için yedeğe girmez. Ayda bir almanı öneririm.</p>`:''}<div class="qacts"><button class="btn ghost" data-act="ayarlar">${ic('gear')}Ayarlar</button><button class="btn ghost" data-act="uzmEdit">${ic('steth')}Uzmanlar</button></div></section>`;
  return {title:'Yönetici Paneli',sub:'Yalnızca yetkililere görünür',body:h};}
 function vDuyuru(){const all=annSorted();const act=all.filter(annActive),old=all.filter(a=>!annActive(a));const acts=yetkili()?`<button class="icon-btn" data-act="annNew" aria-label="Duyuru ekle">${ic('plus')}</button>`:'';let b=act.length?act.map(a=>annCard(a,true)).join(''):'<p class="empty">Güncel duyuru yok.</p>';if(old.length)b+=`<button class="btn sm ghost" data-act="set" data-key="annPast" data-val="${S.ui.annPast?'':'1'}">${S.ui.annPast?'Süresi dolanları gizle':`Süresi dolan ${old.length} duyuruyu göster`}</button>`+(S.ui.annPast?old.map(a=>annCard(a,true)).join(''):'');return {title:'Duyurular',sub:'Güncel duyurular ve arşiv',acts,body:b};}
@@ -1343,7 +1366,38 @@ function vSohbet(){let h='<div class="chat" id="chat">';let last='',prev=null;
 function updateChatFab(show,r){let f=$('#chat-fab');if(!f){f=document.createElement('a');f.id='chat-fab';f.href='#sohbet';f.setAttribute('aria-label','Sohbet');document.body.appendChild(f);}
  if(!show||r==='sohbet'){f.hidden=true;return;}f.hidden=false;const n=chUnread();f.innerHTML=`${ic('chat')}${n?`<span class="ch-badge">${n>99?'99+':n}</span>`:''}`;f.setAttribute('aria-label',n?`Sohbet, ${n} okunmamış mesaj`:'Sohbet');}
 
-const VIEWS={ana:vHome,sohbet:vSohbet,degisim:vDegisim,izin:vIzin,nobet:()=>vMonthly('asistan'),uzman:()=>vMonthly('uzman'),haftalik:vWeekly,islem:vIslem,rotasyon:vRot,seminer:vSem,kongre:vKon,kadro:vKadro,yonetim:vYonetim,duyuru:vDuyuru,profil:vProfil};
+/* ---------- kullanım izleme (yalnız portal sahibi görür) ---------- */
+const SAYFA={ana:'Ana sayfa',nobet:'Nöbet Listesi',uzman:'Uzman Nöbeti',haftalik:'Haftalık Liste',islem:'İşlemlerim',rotasyon:'Rotasyonlar',seminer:'Seminerler',kongre:'Kongreler',kadro:'Kadro',duyuru:'Duyurular',profil:'Profil',yonetim:'Yönetici Paneli',degisim:'Nöbet Değişimi',izin:'İzin Planı',sohbet:'Sohbet',izleme:'Kullanım'};
+const cihaz=()=>/iPhone|iPad/i.test(navigator.userAgent)?'iPhone':/Android/i.test(navigator.userAgent)?'Android':'Bilgisayar';
+let pingT=0;
+function ping(force){if(!S.uid||S.state!=='ready'||!approved()||!S.db)return;const n=Date.now();if(!force&&n-pingT<45000)return;pingT=n;const k=me();S.db.doc('oturum/'+S.uid).set({ad:k?k.adSoyad:'',son:n,sayfa:route(),cihaz:cihaz()}).catch(()=>{});}
+function logEv(tur,sayfa){if(!S.uid||!S.db||!approved())return;const k=me();S.db.collection('hareket').doc().set({u:S.uid,ad:k?k.adSoyad:'',tur,sayfa:sayfa||'',cihaz:cihaz(),ts:Date.now()}).catch(()=>{});}
+function trackRoute(r){if(S.state!=='ready'||!approved())return;if(S.lastLogR===r)return;const first=S.lastLogR==null;S.lastLogR=r;
+ if(first){let fresh=true;try{fresh=!sessionStorage.getItem('ap-giris-'+S.uid);sessionStorage.setItem('ap-giris-'+S.uid,'1');}catch(e){}if(fresh)logEv('giris',r);}
+ logEv('sayfa',r);ping(true);}
+setInterval(()=>{if(document.visibilityState==='visible')ping(true);},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')ping(true);});
+const agoTxt=ts=>{const d=(Date.now()-ts)/1000;if(d<90)return 'şimdi';if(d<3600)return `${Math.round(d/60)} dk önce`;if(d<86400)return `${Math.round(d/3600)} sa önce`;const g=Math.round(d/86400);return g===1?'dün':`${g} gün önce`;};
+function vIzleme(){if(!S.owner)return {title:'Kullanım',body:'<div class="card"><p>Bu sayfa yalnızca portal sahibine açık.</p></div>'};
+ const now=Date.now(),t=todayStr();const ot=Object.entries(S.oturum).map(([u,x])=>Object.assign({u},x));const on=ot.filter(x=>now-x.son<150000).sort((a,b)=>b.son-a.son);
+ const H=S.hareket;const dayOf=ts=>ymd(new Date(ts));const appr=Object.keys(S.kayit).filter(id=>S.onay[id]);
+ const todayU=new Set(H.filter(x=>dayOf(x.ts)===t).map(x=>x.u));const w7=addDays(t,-6);const weekU=new Set(H.filter(x=>dayOf(x.ts)>=w7).map(x=>x.u));
+ const never=appr.filter(id=>!S.oturum[id]);const weekA=[...weekU].filter(u=>S.onay[u]||u===S.uid).length;
+ let h=`<div class="stats st4">${[[on.length,'şu an çevrimiçi',1],[todayU.size,'bugün girdi'],[weekU.size,'son 7 gün aktif'],[appr.length,'onaylı kişi']].map(([n,l,hot])=>`<div class="card stat${hot&&n?' hot':''}"><b>${n}</b><span>${l}</span></div>`).join('')}</div>`;
+ h+=`<section class="card"><div class="card-h"><h2>Şu an çevrimiçi</h2><span class="live-dot" aria-hidden="true"></span></div>${on.length?`<ul class="alist">${on.map(x=>`<li class="arow"><div class="arow-t"><b><span class="on-dot"></span>${esc(x.ad||'—')}${x.u===S.uid?' (sen)':''}</b><small>${esc(SAYFA[x.sayfa]||x.sayfa||'')} · ${esc(x.cihaz||'')} · ${agoTxt(x.son)}</small></div></li>`).join('')}</ul>`:'<p class="muted">Şu an portalda kimse yok.</p>'}</section>`;
+ const days=[];for(let i=13;i>=0;i--)days.push(addDays(t,-i));const dau=days.map(d=>new Set(H.filter(x=>dayOf(x.ts)===d).map(x=>x.u)).size);const mx=Math.max(1,...dau);
+ const gir=d=>H.filter(x=>x.tur==='giris'&&dayOf(x.ts)===d).length,pvD=d=>H.filter(x=>x.tur==='sayfa'&&dayOf(x.ts)===d).length;const avg=Math.round(dau.slice(-7).reduce((a,b)=>a+b,0)/7*10)/10;
+ h+=`<section class="card"><div class="card-h"><h2>Bugün</h2><span class="muted">${esc(fmtDay(t))}</span></div><div class="stats st3">${[[todayU.size,'kişi girdi'],[gir(t),'giriş'],[pvD(t),'bölüm açıldı']].map(([n,l])=>`<div class="stat"><b>${n}</b><span>${l}</span></div>`).join('')}</div><p class="hint" style="margin-top:8px">Son 7 günde günde ortalama <b>${avg}</b> kişi; onaylı ${appr.length} kişinin ${weekA}'i bu hafta en az bir kez girdi (%${appr.length?Math.round(weekA/appr.length*100):0}).</p></section>`;
+ h+=`<section class="card"><div class="card-h"><h2>Günlük aktif kişi</h2><span class="muted">son 14 gün</span></div><div class="dau" role="img" aria-label="Son 14 günde günlük aktif kişi sayısı">${days.map((d,i)=>`<div class="dau-c" title="${esc(fmtShort(d))}: ${dau[i]} kişi"><span class="dau-v">${dau[i]||''}</span><div class="dau-b" style="height:${Math.round(dau[i]/mx*100)}%"></div><span class="dau-l">${+d.slice(8)}</span></div>`).join('')}</div></section>`;
+ const pv={};H.filter(x=>x.tur==='sayfa'&&dayOf(x.ts)>=w7).forEach(x=>{pv[x.sayfa]=(pv[x.sayfa]||0)+1;});const top=Object.entries(pv).sort((a,b)=>b[1]-a[1]).slice(0,8);const pmx=Math.max(1,...top.map(x=>x[1]));
+ h+=`<section class="card"><div class="card-h"><h2>En çok açılan bölümler</h2><span class="muted">son 7 gün</span></div>${top.length?top.map(([k,n])=>`<div class="hbar"><span class="hbar-l">${esc(SAYFA[k]||k)}</span><div class="hbar-t"><div class="hbar-f" style="width:${Math.round(n/pmx*100)}%"></div></div><span class="hbar-n">${n}</span></div>`).join(''):'<p class="muted">Henüz veri yok.</p>'}</section>`;
+ const all=appr.map(id=>({id,k:S.kayit[id],o:S.oturum[id]})).sort((a,b)=>((b.o&&b.o.son)||0)-((a.o&&a.o.son)||0));
+ h+=`<section class="card"><div class="card-h"><h2>Son görülme</h2>${never.length?`<span class="pill warn">${never.length} hiç girmedi</span>`:''}</div><ul class="alist">${all.map(x=>`<li class="arow"><div class="arow-t"><b>${x.o&&now-x.o.son<150000?'<span class="on-dot"></span>':''}${esc(x.k.adSoyad)}</b><small>${x.o?`${agoTxt(x.o.son)} · ${esc(SAYFA[x.o.sayfa]||'')} · ${esc(x.o.cihaz||'')}`:'Henüz giriş yapmadı'}</small></div></li>`).join('')}</ul></section>`;
+ const feed=H.slice(0,40);
+ h+=`<section class="card"><div class="card-h"><h2>Son hareketler</h2></div>${feed.length?`<ul class="alist">${feed.map(x=>`<li class="arow"><div class="arow-t"><b>${esc(x.ad||'—')}</b><small>${x.tur==='giris'?'Giriş yaptı':`${esc(SAYFA[x.sayfa]||x.sayfa)} açtı`} · ${esc(x.cihaz||'')} · ${agoTxt(x.ts)}</small></div></li>`).join('')}</ul>`:'<p class="muted">Henüz hareket yok.</p>'}<p class="hint" style="margin-top:8px">Yalnızca hangi bölümün ne zaman açıldığı kaydedilir; içerik ve yazılanlar kaydedilmez. Bu sayfayı yalnızca sen görürsün.</p></section>`;
+ return {title:'Kullanım',sub:'Çevrimiçi ve hareketler',body:h};}
+
+const VIEWS={ana:vHome,izleme:vIzleme,sohbet:vSohbet,degisim:vDegisim,izin:vIzin,nobet:()=>vMonthly('asistan'),uzman:()=>vMonthly('uzman'),haftalik:vWeekly,islem:vIslem,rotasyon:vRot,seminer:vSem,kongre:vKon,kadro:vKadro,yonetim:vYonetim,duyuru:vDuyuru,profil:vProfil};
 
 /* ---------- çizim ---------- */
 const route=()=>{const r=(location.hash||'').replace(/^#/,'');return VIEWS[r]?r:'ana';};
@@ -1404,6 +1458,7 @@ function render(){const r=route();let v;
  else{window.scrollTo(0,0);S.lastRoute=r;}
  annRestore();
  updateChatFab(showTabs,r);
+ if(showTabs)trackRoute(r);
  if(showTabs&&r==='sohbet'){const n=S.sohbet.length;if(n!==S.chN||!same){S.chN=n;requestAnimationFrame(()=>window.scrollTo(0,document.body.scrollHeight));}chMark();}
 }
 
@@ -1693,7 +1748,7 @@ function sub(key,ref,fn){const u=ref.onSnapshot(snap=>{try{fn(snap);}catch(e){co
 function retryDenied(){const d=S.denied;if(!d)return;const ks=Object.keys(d);if(!ks.length)return;S.denied={};ks.forEach(k=>{try{d[k]();}catch(e){console.warn('retry',k,e);}});}
 function accessKey(){return (S.uid&&S.onay&&S.onay[S.uid]?'o':'')+(S.owner?'s':'')+(S.uid&&(S.yetki||[]).includes(S.uid)?'y':'');}
 function accessChanged(){const k=accessKey();if(S.accKey!==undefined&&k!==S.accKey&&k)retryDenied();S.accKey=k;}
-function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.denied={};S.accKey=undefined;S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];}
+function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.denied={};S.accKey=undefined;S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];S.oturum={};S.hareket=[];S.lastLogR=null;}
 function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collection(path),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=d.data();});S[key]=o;if(key==='onay')accessChanged();});
  col('kayit','kayit');col('takas','takas');col('izin','izin');col('izdonem','izdonem');
  {const c=db.collection('sohbet');if(c.recent)sub('sohbet',c.recent(150,'ts'),snap=>{S.sohbet=snap.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>a.ts-b.ts);});}col('onay','onay');col('duyurular','duyurular');col('nobet','nobet');col('haftalik','haftalik');col('rotasyon','rotasyon');col('seminer','seminer');col('kongre','kongre');col('katilim','katilim');
@@ -1701,7 +1756,7 @@ function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collectio
  sub('ayar',db.doc('ayar/genel'),s=>{S.ayar=s.exists?s.data():{};});
  sub('kadro',db.doc('kadro/uzmanlar'),s=>{S.kadro=s.exists?s.data():{uzmanlar:[]};});
  if(S.uid&&!S.viewOnly)sub('kisiMe',db.doc('kisi/'+S.uid),s=>{S.kisiMe=s.exists?s.data():null;});
- if(S.owner)col('kisi','kisi');
+ if(S.owner){col('kisi','kisi');col('oturum','oturum');const hc=db.collection('hareket');if(hc.recent)sub('hareket',hc.recent(600,'ts'),snap=>{S.hareket=snap.docs.map(d=>d.data()).sort((a,b)=>b.ts-a.ts);});}
  if(S.uid)sub('islem',db.doc(`data/users/${S.uid}/islem`),s=>{S.islem=s.exists?s.data():null;if(!iDirty&&!iSaving)S.islemLocal=null;});
  setTimeout(()=>{if(!dataReady()){S.slow=true;render();}},10000);}
 async function init(){render();drawWave();
