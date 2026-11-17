@@ -60,6 +60,16 @@ service cloud.firestore {
       allow write: if onayli() && (uid == me() || yetkili());
     }
 
+    // Sohbet: onaylılar okur ve kendi adına yazar; mesajı sahibi ya da yetkili siler
+    match /sohbet/{id} {
+      allow read: if onayli();
+      allow create: if onayli() && request.resource.data.u == me()
+                    && request.resource.data.metin is string
+                    && request.resource.data.metin.size() > 0 && request.resource.data.metin.size() <= 1000;
+      allow update: if false;
+      allow delete: if onayli() && (resource.data.u == me() || yetkili());
+    }
+
     match /takas/{id} {
       allow read, create, update: if onayli();
       allow delete: if yetkili();

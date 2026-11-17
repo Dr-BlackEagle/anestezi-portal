@@ -632,6 +632,31 @@ input[type="search"]{border-radius:999px;border-color:var(--line)}
 .rt-k{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px}
 .rt-k.ok{background:rgba(30,158,87,.3)}.rt-k.part{background:rgba(242,183,5,.35)}
 .rt td.bad,.rt td.rt-t.bad{background:var(--err-ring);color:var(--err-ink);font-weight:700}
+.chat{display:flex;flex-direction:column;gap:3px;padding-bottom:84px}
+.ch-day{display:flex;justify-content:center;margin:14px 0 8px}
+.ch-day span{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:4px 12px;border-radius:999px}
+.msg{display:flex;flex-direction:column;align-items:flex-start;max-width:82%;margin-top:6px}
+.msg.cont{margin-top:0}
+.msg.mine{align-self:flex-end;align-items:flex-end}
+.msg-n{font-size:12px;font-weight:600;color:var(--plum);margin:0 0 2px 12px}
+.msg-b{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px 18px 18px 6px;padding:8px 12px 6px;font-size:15px;line-height:1.4;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.04);cursor:default;word-break:break-word}
+.msg.cont .msg-b{border-top-left-radius:8px}
+.msg.mine .msg-b{background:var(--plum);border-color:transparent;color:#fff;border-radius:18px 18px 6px 18px}
+.msg.mine.cont .msg-b{border-top-right-radius:8px}
+:root[data-mode="dark"] .msg.mine .msg-b,:root[data-mode="dark"] .ch-send,:root[data-mode="dark"] #chat-fab{color:#2A1027}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-mode="light"]) .msg.mine .msg-b,:root:not([data-theme="light"]):not([data-mode="light"]) .ch-send,:root:not([data-theme="light"]):not([data-mode="light"]) #chat-fab{color:#2A1027}}
+.msg-b[data-act]{cursor:pointer}
+.msg-t{white-space:pre-wrap}
+.msg-t a{color:inherit;text-decoration:underline}
+.msg-time{display:inline-block;margin-left:8px;font-size:11px;opacity:.6;vertical-align:-2px}
+.ch-in{position:fixed;left:0;right:0;bottom:calc(74px + env(safe-area-inset-bottom));z-index:29;display:flex;gap:8px;align-items:flex-end;padding:8px max(12px,calc((100% - 560px) / 2)) 8px;background:var(--bg);border-top:1px solid var(--line)}
+.ch-in textarea{flex:1;min-height:44px;max-height:140px;resize:none;border-radius:22px;padding:11px 16px;font:inherit;font-size:15px;line-height:1.35;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.ch-send{width:44px;height:44px;border-radius:50%;border:0;background:var(--plum);color:#fff;display:grid;place-items:center;flex-shrink:0;cursor:pointer}
+.ch-send svg{width:20px;height:20px}
+#chat-fab{position:fixed;right:max(16px,calc((100% - 560px) / 2 + 6px));bottom:calc(88px + env(safe-area-inset-bottom));z-index:31;width:56px;height:56px;border-radius:18px;background:var(--plum);color:#fff;display:grid;place-items:center;box-shadow:0 10px 24px rgba(151,63,138,.35)}
+#chat-fab[hidden]{display:none}
+#chat-fab svg{width:26px;height:26px}
+.ch-badge{position:absolute;top:-6px;right:-6px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#E8A800;color:#2E2207;font-size:12px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
 /* kayıt formu */
 .req-note{font-size:13px;color:var(--muted);margin:-2px 0 -4px}
 .ferr{font-size:12.5px;font-weight:500;color:var(--err-ink)}
@@ -750,7 +775,8 @@ async function boot(){
   doc:id=>docRef(id?path+'/'+id:F.doc(c).path),
   add:wrap(async d=>{const r=await F.addDoc(c,d);return docRef(r.path);}),
   get:wrap(async()=>{const q=await F.getDocs(c);return {docs:q.docs.map(dsnap)};}),
-  onSnapshot:(cb,eb)=>F.onSnapshot(c,q=>cb({docs:q.docs.map(dsnap)}),e=>eb&&eb(err(e)))};};
+  onSnapshot:(cb,eb)=>F.onSnapshot(c,q=>cb({docs:q.docs.map(dsnap)}),e=>eb&&eb(err(e))),
+  recent:(n,field)=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.query(c,F.orderBy(field||'ts','desc'),F.limit(n)),q=>cb({docs:q.docs.map(dsnap)}),e=>eb&&eb(err(e)))})};};
  const db={doc:docRef,collection:colRef};
  const user={
   id:async()=>auth.currentUser?auth.currentUser.uid:null,
@@ -836,6 +862,8 @@ const P={
  swap:'<path d="M7 4L3 8l4 4"/><path d="M3 8h13a4 4 0 014 4"/><path d="M17 20l4-4-4-4"/><path d="M21 16H8a4 4 0 01-4-4"/>',
  leave:'<path d="M12 3v2M5.6 5.6L7 7M3 12h2M17 7l1.4-1.4M19 12h2"/><circle cx="12" cy="12" r="4"/><path d="M4 20h16"/>',
  save:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3"/><path d="M8 21v-7h8v7"/>',
+ chat:'<path d="M21 12a8 8 0 01-11.6 7.1L4 20.5l1.4-4.8A8 8 0 1121 12z"/><path d="M8.5 11h7M8.5 14.2h4.5"/>',
+ send:'<path d="M4 12l16-8-6 16-2.6-6.4z"/><path d="M11.4 13.6L20 4"/>',
  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
  dl:'<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/>',
  alarm:'<circle cx="12" cy="13" r="7"/><path d="M12 9.5V13l2.5 1.5M5 4L2.5 6.5M19 4l2.5 2.5"/>',
@@ -860,7 +888,7 @@ const ic=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 
 /* ---------- durum ---------- */
 const S={state:'loading',db:null,user:null,uid:null,owner:false,viewOnly:false,slow:false,got:new Set(),lastRoute:null,
- kayit:{},onay:{},yetki:[],ayar:{},duyurular:{},nobet:{},haftalik:{},rotasyon:{},seminer:{},kongre:{},katilim:{},kadro:{uzmanlar:[]},kisi:{},kisiMe:null,dl:null,takas:{},izin:{},izdonem:{},
+ kayit:{},onay:{},yetki:[],ayar:{},duyurular:{},nobet:{},haftalik:{},rotasyon:{},seminer:{},kongre:{},katilim:{},kadro:{uzmanlar:[]},kisi:{},kisiMe:null,dl:null,takas:{},izin:{},izdonem:{},sohbet:[],
  islem:null,islemLocal:null,islemSt:'',
  ui:{gTab:null,ay:null,uzAy:null,filtre:null,past:false,hTur:null,hHafta:null,hGun:null,rTab:'bu-ay',rKisi:null,rAy:null,kTab:'asistan',kAra:'',iTarih:null,semPast:false,konPast:false,kxF:'tumu',annI:0},
  imp:null,shareTxt:'',shareOpts:[]};
@@ -1296,7 +1324,26 @@ function vIzin(){const t=todayStr();const ed=yetkili();const open=izOpen();let m
  if(ed)h+=`<section class="card"><div class="card-h"><h2>Yetkili</h2></div><div class="qacts"><button class="btn ghost" data-act="izDonem" data-k="${mk}">${ic('edit')}${dn?'Dönemi düzenle':'Bildirimi aç'}</button><button class="btn ghost" data-act="izShare" data-k="${mk}">${ic('share')}Tabloyu paylaş</button></div></section>`;
  return {title:'İzin Planı',sub:'Liste öncesi izin bildirimleri',body:h};}
 
-const VIEWS={ana:vHome,degisim:vDegisim,izin:vIzin,nobet:()=>vMonthly('asistan'),uzman:()=>vMonthly('uzman'),haftalik:vWeekly,islem:vIslem,rotasyon:vRot,seminer:vSem,kongre:vKon,kadro:vKadro,yonetim:vYonetim,duyuru:vDuyuru,profil:vProfil};
+/* ---------- sohbet ---------- */
+const CH_K='ap-sohbet-son';
+function chSeen(){try{return +localStorage.getItem(CH_K)||0;}catch(e){return S.chSeen||0;}}
+function chMark(){const l=S.sohbet[S.sohbet.length-1];if(!l)return;S.chSeen=l.ts;try{localStorage.setItem(CH_K,String(l.ts));}catch(e){}}
+function chUnread(){const s=chSeen();return S.sohbet.filter(m=>m.ts>s&&m.u!==S.uid).length;}
+function chTime(ts){const d=new Date(ts);return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function chDay(ts){const d=ymd(new Date(ts)),t=todayStr();return d===t?'Bugün':d===addDays(t,-1)?'Dün':fmtDay(d);}
+function linkify(t){return esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');}
+function vSohbet(){let h='<div class="chat" id="chat">';let last='',prev=null;
+ if(!S.sohbet.length)h+='<p class="empty center" style="margin-top:30px">Henüz mesaj yok. İlk mesajı sen yaz.</p>';
+ S.sohbet.forEach(m=>{const d=chDay(m.ts);if(d!==last){h+=`<div class="ch-day"><span>${esc(d)}</span></div>`;last=d;prev=null;}
+  const mine=m.u===S.uid;const cont=prev&&prev.u===m.u&&m.ts-prev.ts<5*60000;const can=mine||yetkili();
+  h+=`<div class="msg${mine?' mine':''}${cont?' cont':''}">${!mine&&!cont?`<b class="msg-n">${esc(m.ad||'')}</b>`:''}<div class="msg-b"${can?` data-act="chMenu" data-id="${esc(m.id)}"`:''}><span class="msg-t">${linkify(m.metin||'')}</span><span class="msg-time">${chTime(m.ts)}</span></div></div>`;prev=m;});
+ h+='</div>';
+ h+=`<form class="ch-in" data-form="chat" autocomplete="off"><textarea id="ch-t" data-keep rows="1" maxlength="1000" placeholder="Mesaj yaz…" aria-label="Mesaj"></textarea><button class="ch-send" type="submit" aria-label="Gönder">${ic('send')}</button></form>`;
+ return {title:'Sohbet',sub:'Tüm asistan ve uzmanlar',body:h};}
+function updateChatFab(show,r){let f=$('#chat-fab');if(!f){f=document.createElement('a');f.id='chat-fab';f.href='#sohbet';f.setAttribute('aria-label','Sohbet');document.body.appendChild(f);}
+ if(!show||r==='sohbet'){f.hidden=true;return;}f.hidden=false;const n=chUnread();f.innerHTML=`${ic('chat')}${n?`<span class="ch-badge">${n>99?'99+':n}</span>`:''}`;f.setAttribute('aria-label',n?`Sohbet, ${n} okunmamış mesaj`:'Sohbet');}
+
+const VIEWS={ana:vHome,sohbet:vSohbet,degisim:vDegisim,izin:vIzin,nobet:()=>vMonthly('asistan'),uzman:()=>vMonthly('uzman'),haftalik:vWeekly,islem:vIslem,rotasyon:vRot,seminer:vSem,kongre:vKon,kadro:vKadro,yonetim:vYonetim,duyuru:vDuyuru,profil:vProfil};
 
 /* ---------- çizim ---------- */
 const route=()=>{const r=(location.hash||'').replace(/^#/,'');return VIEWS[r]?r:'ana';};
@@ -1355,10 +1402,16 @@ function render(){const r=route();let v;
  main.innerHTML=v.body;
  if(same){for(const id in keep){const e=document.getElementById(id);if(e){if(typeof keep[id]==='object')e.checked=keep[id].c;else e.value=keep[id];}}for(const id in keepD){const e=document.getElementById(id);if(e)e.open=keepD[id];}if(act){const e=document.getElementById(act);if(e){e.focus({preventScroll:true});if(e.setSelectionRange&&/text|search|tel/.test(e.type||'')){try{const L=e.value.length;e.setSelectionRange(L,L);}catch(_){}}}}}
  else{window.scrollTo(0,0);S.lastRoute=r;}
- annRestore();}
+ annRestore();
+ updateChatFab(showTabs,r);
+ if(showTabs&&r==='sohbet'){const n=S.sohbet.length;if(n!==S.chN||!same){S.chN=n;requestAnimationFrame(()=>window.scrollTo(0,document.body.scrollHeight));}chMark();}
+}
 
 /* ---------- eylemler ---------- */
 const A={};
+A.chMenu=el=>{const m=S.sohbet.find(x=>x.id===el.dataset.id);if(!m)return;openSheet('Mesaj',`<p class="share-pre" style="white-space:pre-wrap">${esc(m.metin)}</p><div class="share-acts"><button class="btn ghost" data-act="chCopy" data-id="${esc(m.id)}">${ic('copy')}Kopyala</button><button class="btn danger" data-act="chDel" data-id="${esc(m.id)}">${ic('trash')}Mesajı sil</button></div>`);};
+A.chCopy=async el=>{const m=S.sohbet.find(x=>x.id===el.dataset.id);try{await navigator.clipboard.writeText(m.metin);toast('Kopyalandı');}catch(e){toast('Kopyalanamadı.','err');}closeSheet();};
+A.chDel=async el=>{if(await W(()=>S.db.doc('sohbet/'+el.dataset.id).delete(),'Mesaj silindi'))closeSheet();};
 /* değişim */
 A.tkNew=el=>{const d=el.dataset.d,ci=+el.dataset.ci,tip=el.dataset.tip,k=el.dataset.k;const doc=S.nobet[k];const c=doc&&(doc.sutunlar||[])[ci];if(!c)return;
  openSheet('Nöbetini değiştir',`<p class="entry-note" style="padding:0"><b>${esc(fmtDay(d))} · ${esc(c.ad)}</b> nöbetin için ilan açılacak.</p><label class="fld"><span>Not <em>isteğe bağlı</em></span><input id="tk-not" maxlength="120" placeholder="Örn. 22–24 Kasım arası bir nöbetle takas edebilirim"></label><button class="btn block" data-act="tkCreate" data-k="${k}" data-d="${d}" data-ci="${ci}" data-tip="${tip}">İlan aç</button>`);};
@@ -1613,6 +1666,8 @@ FORMS.reg=async()=>{const v=id=>($('#'+id).value||'').trim();
  if(!approved()){render();return toast(old.adSoyad?'Bilgilerin kaydedildi':'Kaydın alındı. Yönetici onaylayınca portal açılır.');}
  if(S.state!=='ready'){S.state='ready';unsubAll();subscribeAll();}
  toast(old.adSoyad&&hp?'Bilgilerin kaydedildi':'Hoş geldin');if(route()==='profil'&&pw)toast('Şifren değişti');if(route()!=='ana')location.hash='ana';else render();};
+FORMS.chat=async()=>{const ta=$('#ch-t');const t=(ta.value||'').trim();if(!t)return;if(t.length>1000)return toast('Mesaj en fazla 1000 karakter olabilir.','err');const k=me();ta.value='';ta.style.height='';
+ try{await S.db.collection('sohbet').doc().set({u:S.uid,ad:k?k.adSoyad:'',metin:t,ts:Date.now()});}catch(e){ta.value=t;toast(e&&e.code==='invalid_argument'?'Gönderilemedi: izin yok (Firebase kurallarını güncelle).':'Gönderilemedi, tekrar dene.','err');}};
 FORMS.login=async()=>{const tc=($('#l-tc').value||'').replace(/\D/g,''),pw=$('#l-pw').value||'',rem=$('#l-rem').checked;const errs=[];const E=(id,m)=>errs.push([id,m]);const ferr=m=>{const e=$('#l-err');if(e){e.textContent=m;e.hidden=false;}};
  if(!tc)E('l-tc','TC kimlik numaranı gir.');else if(tc.length!==11)E('l-tc','TC kimlik numarası 11 haneli olmalı.');if(!pw)E('l-pw','Şifreni gir.');
  const le=$('#l-err');if(le)le.hidden=true;if(errs.length)return fErr(errs,'login');fErr([],'login');
@@ -1627,15 +1682,16 @@ async function tcHash(tc){const b=await crypto.subtle.digest('SHA-256',new TextE
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el)return;const fn=A[el.dataset.act];if(!fn)return;e.preventDefault();try{const r=fn(el,e);if(r&&r.catch)r.catch(err=>{console.warn(err);toast('Bir şeyler ters gitti, tekrar dene.','err');});}catch(err){console.warn(err);toast('Bir şeyler ters gitti, tekrar dene.','err');}});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[role="button"][data-act]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet();});
 document.addEventListener('submit',e=>{const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();const fn=FORMS[f.dataset.form];if(fn)fn(f);});
-document.addEventListener('input',e=>{const el=e.target;if(el.id==='f-tc'||el.id==='l-tc'){const d=el.value.replace(/\D/g,'').slice(0,11);if(d!==el.value)el.value=d;}if(el.getAttribute&&el.getAttribute('aria-invalid')==='true'){el.removeAttribute('aria-invalid');const x=document.getElementById('e-'+el.id);if(x)x.hidden=true;}if(el.dataset&&el.dataset.in){S.ui[el.dataset.in]=el.value;schedule();}});
+document.addEventListener('input',e=>{const el=e.target;if(el.id==='ch-t'){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,140)+'px';}if(el.id==='f-tc'||el.id==='l-tc'){const d=el.value.replace(/\D/g,'').slice(0,11);if(d!==el.value)el.value=d;}if(el.getAttribute&&el.getAttribute('aria-invalid')==='true'){el.removeAttribute('aria-invalid');const x=document.getElementById('e-'+el.id);if(x)x.hidden=true;}if(el.dataset&&el.dataset.in){S.ui[el.dataset.in]=el.value;schedule();}});
 document.addEventListener('change',e=>{const el=e.target;if(!el.dataset||!el.dataset.ch)return;const k=el.dataset.ch;if(k==='annSz'){const d=$('#a-e');if(d){d.disabled=el.checked;if(!el.checked&&!d.value)d.value=addDays(todayStr(),7);}return;}if(k==='fAd'){const ks=$('#f-kisa');if(ks&&!ks.value.trim()){const f=String(el.value).trim().split(/\s+/)[0];if(f)ks.value=up(f);}return;}if(k==='iTarih'){const v=el.value;S.ui.iTarih=v&&v<=todayStr()?v:null;}else if(k==='rKisi'){S.ui.rKisi=+el.value;}render();});
 window.addEventListener('hashchange',()=>{closeSheet();render();});
 
 /* ---------- veri bağlantısı ---------- */
 function sub(key,ref,fn){const u=ref.onSnapshot(snap=>{try{fn(snap);}catch(e){console.warn(key,e);}S.got.add(key);schedule();},err=>{console.warn('db',key,err&&err.code);S.got.add(key);schedule();});if(typeof u==='function')(S.unsubs=S.unsubs||[]).push(u);}
-function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;}
+function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];}
 function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collection(path),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=d.data();});S[key]=o;});
- col('kayit','kayit');col('takas','takas');col('izin','izin');col('izdonem','izdonem');col('onay','onay');col('duyurular','duyurular');col('nobet','nobet');col('haftalik','haftalik');col('rotasyon','rotasyon');col('seminer','seminer');col('kongre','kongre');col('katilim','katilim');
+ col('kayit','kayit');col('takas','takas');col('izin','izin');col('izdonem','izdonem');
+ {const c=db.collection('sohbet');if(c.recent)sub('sohbet',c.recent(150,'ts'),snap=>{S.sohbet=snap.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>a.ts-b.ts);});}col('onay','onay');col('duyurular','duyurular');col('nobet','nobet');col('haftalik','haftalik');col('rotasyon','rotasyon');col('seminer','seminer');col('kongre','kongre');col('katilim','katilim');
  sub('yetki',db.doc('yetki/liste'),s=>{const d=s.exists?s.data():null;S.yetki=d&&Array.isArray(d.uids)?d.uids.slice():[];});
  sub('ayar',db.doc('ayar/genel'),s=>{S.ayar=s.exists?s.data():{};});
  sub('kadro',db.doc('kadro/uzmanlar'),s=>{S.kadro=s.exists?s.data():{uzmanlar:[]};});
