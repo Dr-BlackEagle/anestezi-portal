@@ -982,6 +982,8 @@ const devirH=d=>isOff(d)?hm(S.ayar.dvHs,'09:00'):hm(S.ayar.dvHi,'08:00');
 const hText=h=>`${pad(Math.floor(h))}:${pad(Math.round((h%1)*60))}`;
 const SFX=['a','e','ye','e','e','e','ya','ye','e','a','a','e','ye'];
 const kadarTxt=h=>{const m=Math.round((h%1)*60),H=Math.floor(h);const sx=m?(m%10===0?{10:'a',20:'ye',30:'a',40:'a',50:'ye'}[m]:SFX[m%10]):SFX[H%12===0&&H?12:H%12];return `${hText(h)}'${sx} kadar`;};
+function nameStd(n){const w=String(n||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);if(!w.length)return '';const tc=x=>x.split('-').map(p=>p?p.charAt(0).toLocaleUpperCase('tr-TR')+p.slice(1).toLocaleLowerCase('tr-TR'):p).join('-');return w.map((x,i)=>i===w.length-1&&w.length>1?x.toLocaleUpperCase('tr-TR'):tc(x)).join(' ');}
+function stdDoc(d){if(!d||typeof d!=='object')return d;let o=d;for(const f of ['adSoyad','ad','aad']){if(typeof d[f]==='string'&&d[f]&&/\s/.test(d[f].trim())){const v=nameStd(d[f]);if(v!==d[f]){if(o===d)o=Object.assign({},d);o[f]=v;}}}return o;}
 function curDutyDate(){const t=todayStr(),n=new Date();return n.getHours()+n.getMinutes()/60<devirH(t)?addDays(t,-1):t;}
 function nextDuty(){if(!me())return null;return dutyList(myTip(),myTok(),todayStr())[0]||null;}
 function dutyWord(n){if(!n)return null;const t=todayStr();if(n.date===t)return 'Bugün nöbettesin';if(n.date===addDays(t,1))return 'Yarın nöbettesin';return 'Sıradaki: '+fmtShort(n.date);}
@@ -1731,7 +1733,7 @@ function fErr(list,form){const f=$(`form[data-form="${form||'reg'}"]`);if(!f)ret
  list.forEach(([id,m])=>{const e=document.getElementById(id),x=document.getElementById('e-'+id);if(e){e.setAttribute('aria-invalid','true');e.setAttribute('aria-describedby','e-'+id);}if(x){x.textContent=m;x.hidden=false;}});
  if(list.length){const e=document.getElementById(list[0][0]);if(e){e.focus({preventScroll:true});e.scrollIntoView({block:'center',behavior:'smooth'});}}}
 FORMS.reg=async()=>{const v=id=>($('#'+id).value||'').trim();
- const ad=v('f-ad').replace(/\s+/g,' '),tc=v('f-tc').replace(/\D/g,''),unvan=$('#f-unvan').value,bas=v('f-bas'),mail=v('f-mail').toLocaleLowerCase('tr-TR'),telRaw=v('f-tel'),tn=telNorm(telRaw),kisa=up(v('f-kisa')),pw=($('#f-pw')||{}).value||'',pw2=($('#f-pw2')||{}).value||'',hp=hasPw(S.kisiMe);
+ const ad=nameStd(v('f-ad')),tc=v('f-tc').replace(/\D/g,''),unvan=$('#f-unvan').value,bas=v('f-bas'),mail=v('f-mail').toLocaleLowerCase('tr-TR'),telRaw=v('f-tel'),tn=telNorm(telRaw),kisa=up(v('f-kisa')),pw=($('#f-pw')||{}).value||'',pw2=($('#f-pw2')||{}).value||'',hp=hasPw(S.kisiMe);
  const errs=[];const E=(id,m)=>errs.push([id,m]);
  if(!/^\S{2,}(\s+\S+)+$/.test(ad))E('f-ad','Adını ve soyadını birlikte yaz.');
  if(!tc)E('f-tc','TC kimlik numaranı gir.');else if(tc.length!==11)E('f-tc','TC kimlik numarası 11 haneli olmalı.');else if(!tcOk(tc))E('f-tc','Bu numara geçerli görünmüyor; rakamları kontrol et.');
@@ -1790,14 +1792,14 @@ function retryDenied(){const d=S.denied;if(!d)return;const ks=Object.keys(d);if(
 function accessKey(){return (S.uid&&S.onay&&S.onay[S.uid]?'o':'')+(S.owner?'s':'')+(S.uid&&(S.yetki||[]).includes(S.uid)?'y':'');}
 function accessChanged(){const k=accessKey();if(S.accKey!==undefined&&k!==S.accKey&&k)retryDenied();S.accKey=k;}
 function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.denied={};S.accKey=undefined;S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];S.oturum={};S.hareket=[];S.lastLogR=null;}
-function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collection(path),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=d.data();});S[key]=o;if(key==='onay')accessChanged();});
+function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collection(path),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=stdDoc(d.data());});S[key]=o;if(key==='onay')accessChanged();});
  col('kayit','kayit');col('takas','takas');col('izin','izin');col('izdonem','izdonem');
- {const c=db.collection('sohbet');if(c.recent)sub('sohbet',c.recent(150,'ts'),snap=>{S.sohbet=snap.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>a.ts-b.ts);});}col('onay','onay');col('duyurular','duyurular');col('nobet','nobet');col('haftalik','haftalik');col('rotasyon','rotasyon');col('seminer','seminer');col('kongre','kongre');col('katilim','katilim');
+ {const c=db.collection('sohbet');if(c.recent)sub('sohbet',c.recent(150,'ts'),snap=>{S.sohbet=snap.docs.map(d=>Object.assign({id:d.id},stdDoc(d.data()))).sort((a,b)=>a.ts-b.ts);});}col('onay','onay');col('duyurular','duyurular');col('nobet','nobet');col('haftalik','haftalik');col('rotasyon','rotasyon');col('seminer','seminer');col('kongre','kongre');col('katilim','katilim');
  sub('yetki',db.doc('yetki/liste'),s=>{const d=s.exists?s.data():null;S.yetki=d&&Array.isArray(d.uids)?d.uids.slice():[];accessChanged();});
  sub('ayar',db.doc('ayar/genel'),s=>{S.ayar=s.exists?s.data():{};});
  sub('kadro',db.doc('kadro/uzmanlar'),s=>{S.kadro=s.exists?s.data():{uzmanlar:[]};});
  if(S.uid&&!S.viewOnly)sub('kisiMe',db.doc('kisi/'+S.uid),s=>{S.kisiMe=s.exists?s.data():null;});
- if(S.owner){col('kisi','kisi');col('oturum','oturum');const hc=db.collection('hareket');if(hc.recent)sub('hareket',hc.recent(600,'ts'),snap=>{S.hareket=snap.docs.map(d=>d.data()).sort((a,b)=>b.ts-a.ts);});}
+ if(S.owner){col('kisi','kisi');col('oturum','oturum');const hc=db.collection('hareket');if(hc.recent)sub('hareket',hc.recent(600,'ts'),snap=>{S.hareket=snap.docs.map(d=>stdDoc(d.data())).sort((a,b)=>b.ts-a.ts);});}
  if(S.uid)sub('islem',db.doc(`data/users/${S.uid}/islem`),s=>{S.islem=s.exists?s.data():null;if(!iDirty&&!iSaving)S.islemLocal=null;});
  setTimeout(()=>{if(!dataReady()){S.slow=true;render();}},10000);}
 async function init(){render();drawWave();
