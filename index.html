@@ -1687,12 +1687,17 @@ document.addEventListener('change',e=>{const el=e.target;if(!el.dataset||!el.dat
 window.addEventListener('hashchange',()=>{closeSheet();render();});
 
 /* ---------- veri bağlantısı ---------- */
-function sub(key,ref,fn){const u=ref.onSnapshot(snap=>{try{fn(snap);}catch(e){console.warn(key,e);}S.got.add(key);schedule();},err=>{console.warn('db',key,err&&err.code);S.got.add(key);schedule();});if(typeof u==='function')(S.unsubs=S.unsubs||[]).push(u);}
-function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];}
-function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collection(path),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=d.data();});S[key]=o;});
+function sub(key,ref,fn){const u=ref.onSnapshot(snap=>{try{fn(snap);}catch(e){console.warn(key,e);}S.got.add(key);schedule();},err=>{console.warn('db',key,err&&err.code);(S.denied=S.denied||{})[key]=()=>sub(key,ref,fn);S.got.add(key);schedule();});if(typeof u==='function')(S.unsubs=S.unsubs||[]).push(u);}
+/* A listener refused by the rules (e.g. the person was not approved yet when the portal opened) stops for good.
+   When the person's approval or authority changes, the refused listeners are started again — no reload needed. */
+function retryDenied(){const d=S.denied;if(!d)return;const ks=Object.keys(d);if(!ks.length)return;S.denied={};ks.forEach(k=>{try{d[k]();}catch(e){console.warn('retry',k,e);}});}
+function accessKey(){return (S.uid&&S.onay&&S.onay[S.uid]?'o':'')+(S.owner?'s':'')+(S.uid&&(S.yetki||[]).includes(S.uid)?'y':'');}
+function accessChanged(){const k=accessKey();if(S.accKey!==undefined&&k!==S.accKey&&k)retryDenied();S.accKey=k;}
+function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.denied={};S.accKey=undefined;S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];}
+function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collection(path),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=d.data();});S[key]=o;if(key==='onay')accessChanged();});
  col('kayit','kayit');col('takas','takas');col('izin','izin');col('izdonem','izdonem');
  {const c=db.collection('sohbet');if(c.recent)sub('sohbet',c.recent(150,'ts'),snap=>{S.sohbet=snap.docs.map(d=>Object.assign({id:d.id},d.data())).sort((a,b)=>a.ts-b.ts);});}col('onay','onay');col('duyurular','duyurular');col('nobet','nobet');col('haftalik','haftalik');col('rotasyon','rotasyon');col('seminer','seminer');col('kongre','kongre');col('katilim','katilim');
- sub('yetki',db.doc('yetki/liste'),s=>{const d=s.exists?s.data():null;S.yetki=d&&Array.isArray(d.uids)?d.uids.slice():[];});
+ sub('yetki',db.doc('yetki/liste'),s=>{const d=s.exists?s.data():null;S.yetki=d&&Array.isArray(d.uids)?d.uids.slice():[];accessChanged();});
  sub('ayar',db.doc('ayar/genel'),s=>{S.ayar=s.exists?s.data():{};});
  sub('kadro',db.doc('kadro/uzmanlar'),s=>{S.kadro=s.exists?s.data():{uzmanlar:[]};});
  if(S.uid&&!S.viewOnly)sub('kisiMe',db.doc('kisi/'+S.uid),s=>{S.kisiMe=s.exists?s.data():null;});
