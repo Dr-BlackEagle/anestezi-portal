@@ -987,7 +987,7 @@ const devirH=d=>isOff(d)?hm(S.ayar.dvHs,'09:00'):hm(S.ayar.dvHi,'08:00');
 const hText=h=>`${pad(Math.floor(h))}:${pad(Math.round((h%1)*60))}`;
 const SFX=['a','e','ye','e','e','e','ya','ye','e','a','a','e','ye'];
 const kadarTxt=h=>{const m=Math.round((h%1)*60),H=Math.floor(h);const sx=m?(m%10===0?{10:'a',20:'ye',30:'a',40:'a',50:'ye'}[m]:SFX[m%10]):SFX[H%12===0&&H?12:H%12];return `${hText(h)}'${sx} kadar`;};
-function nameStd(n){const w=String(n||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);if(!w.length)return '';const tc=x=>x.split('-').map(p=>p?p.charAt(0).toLocaleUpperCase('tr-TR')+p.slice(1).toLocaleLowerCase('tr-TR'):p).join('-');return w.map((x,i)=>i===w.length-1&&w.length>1?x.toLocaleUpperCase('tr-TR'):tc(x)).join(' ');}
+function nameStd(n){return String(n||'').replace(/\s+/g,' ').trim().toLocaleUpperCase('tr-TR');}
 function stdDoc(d){if(!d||typeof d!=='object')return d;let o=d;for(const f of ['adSoyad','ad','aad']){if(typeof d[f]==='string'&&d[f]&&/\s/.test(d[f].trim())){const v=nameStd(d[f]);if(v!==d[f]){if(o===d)o=Object.assign({},d);o[f]=v;}}}return o;}
 function curDutyDate(){const t=todayStr(),n=new Date();return n.getHours()+n.getMinutes()/60<devirH(t)?addDays(t,-1):t;}
 function nextDuty(){if(!me())return null;return dutyList(myTip(),myTok(),todayStr())[0]||null;}
