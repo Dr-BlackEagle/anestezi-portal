@@ -694,6 +694,8 @@ input[type="search"]{border-radius:999px;border-color:var(--line)}
 .nbc-tt span:not(.nbc-dot){font-size:15px;font-weight:600;color:rgba(255,255,255,.92)}
 .nbc-tt small{width:100%;padding-left:16px;font-size:12.5px;color:rgba(255,255,255,.6)}
 .nbc-dot{width:8px;height:8px;border-radius:50%;background:var(--plum-hi);flex-shrink:0}
+.nbc-dot.live{animation:nbcBlink 1.4s ease-in-out infinite}
+@keyframes nbcBlink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(227,163,214,.55)}50%{opacity:.25;box-shadow:0 0 0 5px rgba(227,163,214,0)}}
 .nbc-seg{display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);flex-shrink:0}
 .nbc-seg button{border:0;background:transparent;color:rgba(255,255,255,.7);font:inherit;font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:999px;cursor:pointer}
 .nbc-seg button[aria-selected="true"]{background:#fff;color:#2E3049}
@@ -1154,7 +1156,7 @@ function homeDuty(){const t=curDutyDate();const yar=S.ui.hnb==='yarin';const g=y
   const title=k=>/YBÜ/i.test(k)?'Yoğun Bakım':/AMEL/i.test(k)?'Ameliyathane':gLabel(k);
   const nm=x=>`<span class="${tok&&x.v===tok?'me':''}">${esc(x.v)}${x.et?` <i>(${esc(x.et)})</i>`:''}</span>`;
   body=ord.map(k=>{const x=grp[k];return `<div class="nbc-g"><div class="nbc-h">${esc(title(k))}</div><div class="nbc-n">${x.uz.map(u=>`<b class="${tok&&u.v===tok?'me':''}">${esc(u.v)}</b>`).join(', ')}${x.uz.length&&x.as.length?'<span class="nbc-d">·</span>':''}${x.as.map(nm).join(', ')}</div></div>`;}).join('');}
- return `<section class="card sum nbc"><div class="nbc-top"><div class="nbc-tt"><span class="nbc-dot"></span><span>${yar?'Sonraki nöbet':'Şu an nöbette'}</span><small>${esc(fmtShort(g).replace(/ \S+$/,''))} · ${esc(fmtShort(nx).replace(/ \S+$/,''))} ${kadarTxt(devirH(nx))}</small></div>${sg}</div>${body}<a class="nbc-all" href="#nobet">Tüm liste ${ic('next')}</a></section>`;}
+ return `<section class="card sum nbc"><div class="nbc-top"><div class="nbc-tt"><span class="nbc-dot${yar?'':' live'}"></span><span>${yar?'Sonraki nöbet':'Şu an nöbette'}</span><small>${esc(fmtShort(g).replace(/ \S+$/,''))} · ${esc(fmtShort(nx).replace(/ \S+$/,''))} ${kadarTxt(devirH(nx))}</small></div>${sg}</div>${body}<a class="nbc-all" href="#nobet">Tüm liste ${ic('next')}</a></section>`;}
 function ctaDuty(){const n=nextDuty();if(!n)return '';const t=todayStr();const w=n.date===t?'Bugün':n.date===addDays(t,1)?'Yarın':null;if(!w)return '';return `<div class="cta"><span>${w} nöbetin var · ${esc(n.col.ad)}, ${esc(dutyTime(n.col))}</span><a href="${esc(calLink(n))}" target="_blank" rel="noopener">Takvime ekle</a></div>`;}
 function tileSub(go){const t=todayStr();try{switch(go){
  case 'nobet':{if(me()&&myTip()==='asistan'){const w=dutyWord(nextDuty());if(w)return [w,/Bugün|Yarın/.test(w)];}return ['Aylık asistan listesi'];}
