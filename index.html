@@ -704,6 +704,18 @@ input[type="search"]{border-radius:999px;border-color:var(--line)}
 :root[data-mode="dark"] .icon-btn.adm-ic{background:rgba(242,183,5,.16)!important;color:#F2C14E!important;border-color:rgba(242,183,5,.38)!important}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-mode="light"]) .icon-btn.adm-ic{background:rgba(242,183,5,.16)!important;color:#F2C14E!important;border-color:rgba(242,183,5,.38)!important}}
 .adm-b{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#C0392B;color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
+.card.sum.nbc{padding:12px 14px 8px!important}
+.nbc-top{margin-bottom:2px}
+.nbc-tt span:not(.nbc-dot){font-size:14px}
+.nbc-tt small{font-size:11.5px;padding-left:16px;white-space:nowrap}
+.nbc-seg button{font-size:12px;padding:5px 10px}
+.nbc-g{display:grid;grid-template-columns:96px minmax(0,1fr);column-gap:10px;align-items:baseline;padding:7px 0}
+.nbc-h{margin:0;font-size:10.5px;letter-spacing:.06em}
+.nbc-n{font-size:13.5px;line-height:1.4}
+.nbc-n b{font-size:13.5px}
+.nbc-n i{font-size:11px}
+.nbc-d{margin:0 5px}
+.nbc-all{padding-top:6px;font-size:12.5px}
 /* kayıt formu */
 .req-note{font-size:13px;color:var(--muted);margin:-2px 0 -4px}
 .ferr{font-size:12.5px;font-weight:500;color:var(--err-ink)}
@@ -1131,7 +1143,7 @@ function homeDuty(){const t=curDutyDate();const yar=S.ui.hnb==='yarin';const g=y
   const title=k=>/YBÜ/i.test(k)?'Yoğun Bakım':/AMEL/i.test(k)?'Ameliyathane':gLabel(k);
   const nm=x=>`<span class="${tok&&x.v===tok?'me':''}">${esc(x.v)}${x.et?` <i>(${esc(x.et)})</i>`:''}</span>`;
   body=ord.map(k=>{const x=grp[k];return `<div class="nbc-g"><div class="nbc-h">${esc(title(k))}</div><div class="nbc-n">${x.uz.map(u=>`<b class="${tok&&u.v===tok?'me':''}">${esc(u.v)}</b>`).join(', ')}${x.uz.length&&x.as.length?'<span class="nbc-d">·</span>':''}${x.as.map(nm).join(', ')}</div></div>`;}).join('');}
- return `<section class="card sum nbc"><div class="nbc-top"><div class="nbc-tt"><span class="nbc-dot"></span><span>${yar?'Sonraki nöbet':'Şu an nöbette'}</span><small>${esc(fmtShort(g))} · ${esc(fmtShort(nx))} ${kadarTxt(devirH(nx))}</small></div>${sg}</div>${body}<a class="nbc-all" href="#nobet">Tüm liste ${ic('next')}</a></section>`;}
+ return `<section class="card sum nbc"><div class="nbc-top"><div class="nbc-tt"><span class="nbc-dot"></span><span>${yar?'Sonraki nöbet':'Şu an nöbette'}</span><small>${esc(fmtShort(g).replace(/ \S+$/,''))} · ${esc(fmtShort(nx).replace(/ \S+$/,''))} ${kadarTxt(devirH(nx))}</small></div>${sg}</div>${body}<a class="nbc-all" href="#nobet">Tüm liste ${ic('next')}</a></section>`;}
 function ctaDuty(){const n=nextDuty();if(!n)return '';const t=todayStr();const w=n.date===t?'Bugün':n.date===addDays(t,1)?'Yarın':null;if(!w)return '';return `<div class="cta"><span>${w} nöbetin var · ${esc(n.col.ad)}, ${esc(dutyTime(n.col))}</span><a href="${esc(calLink(n))}" target="_blank" rel="noopener">Takvime ekle</a></div>`;}
 function tileSub(go){const t=todayStr();try{switch(go){
  case 'nobet':{if(me()&&myTip()==='asistan'){const w=dutyWord(nextDuty());if(w)return [w,/Bugün|Yarın/.test(w)];}return ['Aylık asistan listesi'];}
