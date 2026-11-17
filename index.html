@@ -699,6 +699,11 @@ input[type="search"]{border-radius:999px;border-color:var(--line)}
 .nbc-all{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;color:rgba(255,255,255,.75);text-decoration:none}
 .nbc-all svg{width:15px;height:15px}
 .seg.seg-sm{padding:3px;gap:2px}.seg.seg-sm button{min-height:32px;padding:0 12px;font-size:13px}
+.bar-a{display:flex;gap:8px;align-items:center}
+.icon-btn.adm-ic{position:relative;background:linear-gradient(135deg,#FFF7DA,#FDEBB0)!important;color:#5A3D02!important;border-color:rgba(202,138,4,.45)!important}
+:root[data-mode="dark"] .icon-btn.adm-ic{background:rgba(242,183,5,.16)!important;color:#F2C14E!important;border-color:rgba(242,183,5,.38)!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-mode="light"]) .icon-btn.adm-ic{background:rgba(242,183,5,.16)!important;color:#F2C14E!important;border-color:rgba(242,183,5,.38)!important}}
+.adm-b{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#C0392B;color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
 /* kayıt formu */
 .req-note{font-size:13px;color:var(--muted);margin:-2px 0 -4px}
 .ferr{font-size:12.5px;font-weight:500;color:var(--err-ink)}
@@ -1489,7 +1494,7 @@ function render(){const r=route();let v;
  const showTabs=S.state==='ready'&&dataReady()&&access()&&!needInfo();
  let hdr;
  if(v.bare)hdr='';
- else if(v.hero){const x=v.hero;hdr=`<div class="top-in hero-in"><span class="brand" aria-hidden="true">${LOGO(46)}</span><div class="top-t"><h1 class="ttl">Asistan Portal</h1><p class="eyebrow">${esc(x.g)}${x.name?', '+esc(x.name):''}</p></div><div class="bar-a"><button class="icon-btn" data-act="modeToggle" aria-label="${isDark()?'Açık görünüme geç':'Koyu görünüme geç'}">${ic(isDark()?'sun':'moon')}</button></div></div>`;}
+ else if(v.hero){const x=v.hero;hdr=`<div class="top-in hero-in"><span class="brand" aria-hidden="true">${LOGO(46)}</span><div class="top-t"><h1 class="ttl">Asistan Portal</h1><p class="eyebrow">${esc(x.g)}${x.name?', '+esc(x.name):''}</p></div><div class="bar-a">${yetkili()?(()=>{const n=pendingIds().length+(Object.values(S.takas).filter(x=>x.durum==='kabul').length);return `<a class="icon-btn adm-ic" href="#yonetim" aria-label="Yönetici paneli${n?`, ${n} bekleyen`:''}">${ic('shield')}${n?`<span class="adm-b">${n}</span>`:''}</a>`;})():''}<button class="icon-btn" data-act="modeToggle" aria-label="${isDark()?'Açık görünüme geç':'Koyu görünüme geç'}">${ic(isDark()?'sun':'moon')}</button></div></div>`;}
  else if(v.home)hdr=`<div class="top-in"><span class="brand" aria-hidden="true">${LOGO(46)}</span><div class="top-t"><h1 class="ttl">${esc(v.title)}</h1>${v.sub?`<p class="eyebrow">${esc(v.sub)}</p>`:''}</div><div class="bar-a">${v.acts||''}</div></div>`;
  else hdr=`<div class="top-in"><a class="icon-btn" href="#ana" aria-label="Ana sayfaya dön">${ic('back')}</a><div class="top-t"><h1 class="ttl">${esc(v.title)}</h1>${v.sub?`<p class="eyebrow">${esc(v.sub)}</p>`:''}</div>${v.acts?`<div class="bar-a acts-r">${v.acts}</div>`:''}</div>`;
  $('#bar').innerHTML=hdr;
