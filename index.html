@@ -593,6 +593,18 @@ input[type="search"]{border-radius:999px;border-color:var(--line)}
 .annbar-track{width:100%}
 .annb{align-items:flex-start;padding:14px 16px 12px 14px}
 .annbar-n{align-self:center;padding:0 0 12px}
+.gb-l{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.gb-i{border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--surface)}
+.gb-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.gb-h small{color:var(--muted);font-size:12.5px}.gb-h .pill{margin-left:auto}
+.gb-t{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+.gb-t.oneri{background:#FFF1C2;color:#7A5200}.gb-t.sorun{background:#FDE2E2;color:#9B1C1C}
+.gb-m{margin:8px 0 0;white-space:pre-wrap;line-height:1.45}
+.gb-y{margin-top:10px;padding:10px 12px;border-radius:12px;background:var(--ind);border-left:3px solid var(--plum)}.gb-y small{color:var(--muted)}.gb-y p{margin:4px 0 0;white-space:pre-wrap}
+.gb-a{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.gb-cta p{margin:0 0 12px;line-height:1.45}
+.gb-tur{display:flex;gap:8px;margin-bottom:14px}.gb-tur label{flex:1;cursor:pointer}.gb-tur input{position:absolute;opacity:0;pointer-events:none}
+.gb-tur span{display:flex;align-items:center;justify-content:center;min-height:46px;border-radius:14px;border:1.5px solid var(--line);font-weight:600}
+.gb-tur input:checked+span{border-color:var(--plum);background:var(--ind);color:var(--ink)}.gb-tur input:focus-visible+span{outline:2px solid var(--plum);outline-offset:2px}
 .card.ann.annbar{background:linear-gradient(135deg,#FFF4C9 0%,#FFE08A 100%)!important;border:1px solid rgba(202,138,4,.45)!important;box-shadow:0 10px 26px rgba(161,98,7,.18)!important}
 .card.annbar .annb{color:#3E2B04}
 .card.ann.annbar .annb .ann-ic{background:#F2B705!important;color:#2E2207!important}
@@ -848,7 +860,8 @@ async function boot(){
   add:wrap(async d=>{const r=await F.addDoc(c,d);return docRef(r.path);}),
   get:wrap(async()=>{const q=await F.getDocs(c);return {docs:q.docs.map(dsnap)};}),
   onSnapshot:(cb,eb)=>F.onSnapshot(c,q=>cb({docs:q.docs.map(dsnap)}),e=>eb&&eb(err(e))),
-  recent:(n,field)=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.query(c,F.orderBy(field||'ts','desc'),F.limit(n)),q=>cb({docs:q.docs.map(dsnap)}),e=>eb&&eb(err(e)))})};};
+  recent:(n,field)=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.query(c,F.orderBy(field||'ts','desc'),F.limit(n)),q=>cb({docs:q.docs.map(dsnap)}),e=>eb&&eb(err(e)))}),
+  where:(f,v)=>({onSnapshot:(cb,eb)=>F.onSnapshot(F.query(c,F.where(f,'==',v)),q=>cb({docs:q.docs.map(dsnap)}),e=>eb&&eb(err(e)))})};};
  const db={doc:docRef,collection:colRef};
  const user={
   id:async()=>auth.currentUser?auth.currentUser.uid:null,
@@ -945,6 +958,7 @@ const P={
  chat:'<path d="M21 12a8 8 0 01-11.6 7.1L4 20.5l1.4-4.8A8 8 0 1121 12z"/><path d="M8.5 11h7M8.5 14.2h4.5"/>',
  send:'<path d="M4 12l16-8-6 16-2.6-6.4z"/><path d="M11.4 13.6L20 4"/>',
  pulse:'<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+ bulb:'<path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/>',
  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
  lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>',
  dl:'<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/>',
@@ -1212,7 +1226,7 @@ function vHome(){const k=me();const gp=greetParts();let h='';
 function vProfil(){const k=me();let h='';if(S.viewOnly)return {title:'Profilim',body:'<div class="card"><p>Görüntüleme modundasın; profil oluşturmak için düzenleme izniyle davet edilmen gerekiyor.</p></div>'+modeSeg()};
  h+=sumCard();
  h+=`<div class="card"><div class="card-h"><h2>${esc(k?k.adSoyad:'Kayıt')}</h2></div><div class="chips">${S.owner?'<span class="pill ok">Portal sahibi</span>':''}${yetkili()?'<span class="pill ok">Yetkili</span>':''}${k?`<span class="pill">${k.unvan==='uzman'?'Uzman':'Asistan'}</span>`:''}${k&&k.baslangic?`<span class="pill">${esc(kidemOf(k))}</span>`:''}</div><p class="hint" style="margin-top:10px">${yetkili()?'Listeleri, duyuruları ve programları düzenleyebilirsin.':'Listeleri görebilir, kendi işlemlerini girebilirsin. Listeleri yetkililer düzenler.'}</p></div>`;
- h+=pushCard();h+=modeSeg();h+=regForm(k,S.kisiMe);h+=`<button class="btn ghost block" data-act="logout">${ic('logout')}Çıkış yap</button>`;return {title:'Profilim',body:h};}
+ h+=`<a class="card izl-l" href="#oneri"><span class="ti">${ic('bulb')}</span><span class="arow-t"><b>Öneri ya da sorun bildir</b><small>Portalda eksik ya da hatalı gördüğünü yaz</small></span><span class="izl-go">${ic('next')}</span></a>`;h+=pushCard();h+=modeSeg();h+=regForm(k,S.kisiMe);h+=`<button class="btn ghost block" data-act="logout">${ic('logout')}Çıkış yap</button>`;return {title:'Profilim',body:h};}
 
 function monthSwitch(k,key){return `<div class="switch"><button class="icon-btn" data-act="mShift" data-key="${key}" data-k="${k}" data-n="-1" aria-label="Önceki ay">${ic('back')}</button><b>${monthLabel(k)}</b><button class="icon-btn" data-act="mShift" data-key="${key}" data-k="${k}" data-n="1" aria-label="Sonraki ay">${ic('next')}</button></div>`;}
 function vMonthly(tip){const key=tip==='asistan'?'ay':'uzAy';const t=todayStr();const k=S.ui[key]||monthKey(t);const doc=S.nobet[k];const mine=!!me()&&myTip()===tip;const tok=mine?myTok():null;const title=tip==='asistan'?'Nöbet Listesi':'Uzman Nöbeti';
@@ -1362,6 +1376,7 @@ function vYonetim(){if(!yetkili())return {title:'Yönetici Paneli',body:'<div cl
  if(un.length)h+=`<section class="card"><div class="card-h"><h2>Kayıt olmayanlar</h2><span class="pill warn">${un.length}</span></div><p class="hint" style="margin-bottom:8px">Bu ayın rotasyon listesinde olup portala kayıt olmayan asistanlar.</p><div class="chips">${un.map(n=>`<span class="chip">${esc(n)}</span>`).join('')}</div></section>`;
  const ppl=appr.map(id=>[id,S.kayit[id]]).sort((a,b)=>(a[1].unvan==='uzman')-(b[1].unvan==='uzman')||String(a[1].adSoyad).localeCompare(String(b[1].adSoyad),'tr'));
  h+=`<section class="card"><div class="card-h"><h2>Kişiler ve yetkiler</h2><span class="pill">${S.yetki.length} yetkili</span></div><p class="hint" style="margin-bottom:6px">${S.owner?'Yetkililer listeleri, duyuruları ve programları düzenleyebilir, kayıtları onaylayabilir.':'Yetki vermeyi yalnızca portal sahibi yapabilir.'}</p><ul class="alist">${ppl.map(([id,k])=>{const y=S.yetki.includes(id);return `<li class="arow"><div class="arow-t"><b>${esc(k.adSoyad)}</b><small>${k.unvan==='uzman'?'Uzman':'Asistan'}${y?' · Yetkili':''}${id===S.uid?' · Sen':''}</small></div>${id!==S.uid?`<div class="arow-a">${S.owner?`<button class="btn sm ghost" data-act="yetToggle" data-id="${esc(id)}">${y?'Yetkiyi al':'Yetkili yap'}</button>`:''}${S.owner&&S.kisi[id]&&S.kisi[id].eposta?`<button class="btn sm ghost" data-act="pwReset" data-id="${esc(id)}">Şifre sıfırlama</button>`:''}<button class="btn sm danger" data-act="kayitSil" data-id="${esc(id)}">Çıkar</button></div>`:''}</li>`;}).join('')}</ul></section>`;
+ {const n=gbNew();h+=`<a class="card izl-l" href="#oneri"><span class="ti">${ic('bulb')}</span><span class="arow-t"><b>Öneri ve sorunlar</b><small>${n?`${n} yeni bildirim`:'Yeni bildirim yok'} · yanıtla, durumunu işaretle</small></span><span class="izl-go">${ic('next')}</span></a>`;}
  if(S.owner){const now=Date.now();const on=Object.values(S.oturum).filter(x=>now-x.son<150000).length;h+=`<a class="card izl-l" href="#izleme"><span class="ti">${ic('pulse')}</span><span class="arow-t"><b>Kullanım ve çevrimiçi</b><small>${on?`Şu an ${on} kişi çevrimiçi`:'Şu an kimse çevrimiçi değil'} · son görülme, hareketler</small></span><span class="izl-go">${ic('next')}</span></a>`;}
  h+=`<section class="card"><div class="card-h"><h2>Portal</h2></div><button class="btn block" data-act="rotSure" style="margin-bottom:8px">${ic('rotate')}Rotasyon süre listesini hazırla</button><p class="hint" style="margin:-2px 0 10px">Toplam asistanlık süresi kayıtlı başlangıç tarihlerinden bugüne göre hesaplanır; rotasyon süreleri Rotasyonlar'daki tablodan gelir.</p>${S.owner?`<div class="qacts" style="margin-bottom:8px">${S.dl?`<button class="btn ghost" data-act="bkSave">${ic('save')}Yedek al</button>`:''}<button class="btn ghost" data-act="bkLoad">${ic('upload')}Geri yükle</button></div><p class="hint" style="margin:-2px 0 10px">Yedek; kayıtları, listeleri, duyuruları, rotasyonları, değişimleri ve izinleri içerir. Kişisel işlem karneleri yalnızca sahibine açık olduğu için yedeğe girmez. Ayda bir almanı öneririm.</p>`:''}<div class="qacts"><button class="btn ghost" data-act="ayarlar">${ic('gear')}Ayarlar</button><button class="btn ghost" data-act="uzmEdit">${ic('steth')}Uzmanlar</button></div></section>`;
  return {title:'Yönetici Paneli',sub:'Yalnızca yetkililere görünür',body:h};}
@@ -1449,12 +1464,12 @@ function updateChatFab(show,r){let f=$('#chat-fab');if(!f){f=document.createElem
  if(!show||r==='sohbet'){f.hidden=true;return;}f.hidden=false;const n=chUnread();f.innerHTML=`${ic('chat')}${n?`<span class="ch-badge">${n>99?'99+':n}</span>`:''}`;f.setAttribute('aria-label',n?`Sohbet, ${n} okunmamış mesaj`:'Sohbet');}
 
 /* ---------- kullanım izleme (yalnız portal sahibi görür) ---------- */
-const SAYFA={ana:'Ana sayfa',nobet:'Nöbet Listesi',uzman:'Uzman Nöbeti',haftalik:'Haftalık Liste',islem:'İşlemlerim',rotasyon:'Rotasyonlar',seminer:'Seminerler',kongre:'Kongreler',kadro:'Kadro',duyuru:'Duyurular',profil:'Profil',yonetim:'Yönetici Paneli',degisim:'Nöbet Değişimi',izin:'İzin Planı',sohbet:'Sohbet',izleme:'Kullanım'};
+const SAYFA={ana:'Ana sayfa',nobet:'Nöbet Listesi',uzman:'Uzman Nöbeti',haftalik:'Haftalık Liste',islem:'İşlemlerim',rotasyon:'Rotasyonlar',seminer:'Seminerler',kongre:'Kongreler',kadro:'Kadro',duyuru:'Duyurular',profil:'Profil',oneri:'Öneri ve sorunlar',yonetim:'Yönetici Paneli',degisim:'Nöbet Değişimi',izin:'İzin Planı',sohbet:'Sohbet',izleme:'Kullanım'};
 const cihaz=()=>/iPhone|iPad/i.test(navigator.userAgent)?'iPhone':/Android/i.test(navigator.userAgent)?'Android':'Bilgisayar';
 let pingT=0;
 function ping(force){if(!S.uid||S.state!=='ready'||!approved()||!S.db)return;const n=Date.now();if(!force&&n-pingT<45000)return;pingT=n;const k=me();S.db.doc('oturum/'+S.uid).set({ad:k?k.adSoyad:'',son:n,sayfa:route(),cihaz:cihaz()}).then(()=>{if(S.izlErr){S.izlErr=0;schedule();}}).catch(e=>{S.izlErr=1;schedule();});}
 function logEv(tur,sayfa){if(!S.uid||!S.db||!approved())return;const k=me();S.db.collection('hareket').doc().set({u:S.uid,ad:k?k.adSoyad:'',tur,sayfa:sayfa||'',cihaz:cihaz(),ts:Date.now()}).catch(()=>{});}
-function trackRoute(r){if(S.state!=='ready'||!approved())return;if(S.lastLogR===r)return;const first=S.lastLogR==null;S.lastLogR=r;
+function trackRoute(r){if(S.state!=='ready'||!approved())return;if(S.lastLogR===r)return;const first=S.lastLogR==null;if(r!=='oneri')S.prevRoute=r;S.lastLogR=r;
  if(first){let fresh=true;try{fresh=!sessionStorage.getItem('ap-giris-'+S.uid);sessionStorage.setItem('ap-giris-'+S.uid,'1');}catch(e){}if(fresh)logEv('giris',r);}
  logEv('sayfa',r);ping(true);pushInit();}
 setInterval(()=>{if(document.visibilityState==='visible')ping(true);},60000);
@@ -1502,7 +1517,22 @@ function vIzleme(){if(!S.owner)return {title:'Kullanım',body:'<div class="card"
  h+=`<section class="card"><div class="card-h"><h2>Son hareketler</h2></div>${feed.length?`<ul class="alist">${feed.map(x=>`<li class="arow"><div class="arow-t"><b>${esc(x.ad||'—')}</b><small>${x.tur==='giris'?'Giriş yaptı':`${esc(SAYFA[x.sayfa]||x.sayfa)} açtı`} · ${esc(x.cihaz||'')} · ${agoTxt(x.ts)}</small></div></li>`).join('')}</ul>`:'<p class="muted">Henüz hareket yok.</p>'}<p class="hint" style="margin-top:8px">Yalnızca hangi bölümün ne zaman açıldığı kaydedilir; içerik ve yazılanlar kaydedilmez. Bu sayfayı yalnızca sen görürsün.</p></section>`;
  return {title:'Kullanım',sub:'Çevrimiçi ve hareketler',body:h};}
 
-const VIEWS={ana:vHome,izleme:vIzleme,sohbet:vSohbet,degisim:vDegisim,izin:vIzin,nobet:()=>vMonthly('asistan'),uzman:()=>vMonthly('uzman'),haftalik:vWeekly,islem:vIslem,rotasyon:vRot,seminer:vSem,kongre:vKon,kadro:vKadro,yonetim:vYonetim,duyuru:vDuyuru,profil:vProfil};
+/* ---------- öneri / sorun bildir ---------- */
+const GB_DUR={yeni:['Yeni','warn'],bakiliyor:['İnceleniyor',''],yapildi:['Yapıldı','ok'],kapali:['Kapatıldı','']};
+const gbAll=()=>yetkili()?S.geri:S.geriMine;
+const gbNew=()=>yetkili()?Object.values(S.geri||{}).filter(x=>(x.durum||'yeni')==='yeni').length:0;
+function gbItem(id,x,adm){const d=GB_DUR[x.durum||'yeni']||GB_DUR.yeni;
+ return `<li class="gb-i"><div class="gb-h"><span class="gb-t ${x.tur==='sorun'?'sorun':'oneri'}">${x.tur==='sorun'?'Sorun':'Öneri'}</span>${adm?`<b>${esc(nameOf(x.u)||x.ad||'')}</b>`:''}<small>${esc(agoTxt(x.ts||0))}${x.sayfa&&adm?' · '+esc(SAYFA[x.sayfa]||x.sayfa):''}</small><span class="pill ${d[1]}">${d[0]}</span></div>
+ <p class="gb-m">${esc(x.metin||'')}</p>${x.yanit?`<div class="gb-y"><small>${esc(nameOf(x.by)||'Yönetici')} yanıtladı · ${esc(agoTxt(x.yanitTs||0))}</small><p>${esc(x.yanit)}</p></div>`:''}
+ ${adm?`<div class="gb-a">${Object.entries(GB_DUR).filter(([k])=>k!=='yeni').map(([k,v])=>`<button class="btn sm ${(x.durum||'yeni')===k?'':'ghost'}" data-act="gbDur" data-id="${esc(id)}" data-v="${k}">${v[0]}</button>`).join('')}<button class="btn sm ghost" data-act="gbYanit" data-id="${esc(id)}">${ic('edit')}${x.yanit?'Yanıtı düzenle':'Yanıtla'}</button>${S.owner?`<button class="btn sm ghost danger" data-act="gbDel" data-id="${esc(id)}" aria-label="Sil">${ic('trash')}</button>`:''}</div>`:(x.durum||'yeni')==='yeni'?`<div class="gb-a"><button class="btn sm ghost" data-act="gbDel" data-id="${esc(id)}">${ic('trash')}Geri çek</button></div>`:''}</li>`;}
+function vOneri(){let h='';const adm=yetkili();
+ h+=`<section class="card gb-cta"><p>Portalda eksik gördüğün, eklenmesini istediğin ya da çalışmayan bir şey mi var? Yaz, yöneticilere iletilsin. Yanıt gelince bildirim alırsın.</p><button class="btn block" data-act="gbNew">${ic('plus')}Öneri ya da sorun bildir</button></section>`;
+ if(adm){const f=S.ui.gbF||'acik';const all=Object.entries(S.geri||{}).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));const L=all.filter(([,x])=>f==='tumu'||!['yapildi','kapali'].includes(x.durum||'yeni'));
+  h+=`<section class="card"><div class="card-h"><h2>Gelen bildirimler</h2>${gbNew()?`<span class="pill warn">${gbNew()} yeni</span>`:''}</div>${seg('gbF',f,[['acik','Açık'],['tumu','Tümü']])}${L.length?`<ul class="gb-l">${L.map(([id,x])=>gbItem(id,x,true)).join('')}</ul>`:'<p class="empty">Burada bildirim yok.</p>'}</section>`;}
+ const mine=Object.entries(S.geriMine||{}).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+ if(!adm||mine.length)h+=`<section class="card"><div class="card-h"><h2>Gönderdiklerim</h2></div>${mine.length?`<ul class="gb-l">${mine.map(([id,x])=>gbItem(id,x,false)).join('')}</ul>`:'<p class="empty">Henüz bir şey göndermedin.</p>'}</section>`;
+ return {title:'Öneri ve sorunlar',sub:'Portalı birlikte geliştirelim',body:h};}
+const VIEWS={ana:vHome,oneri:vOneri,izleme:vIzleme,sohbet:vSohbet,degisim:vDegisim,izin:vIzin,nobet:()=>vMonthly('asistan'),uzman:()=>vMonthly('uzman'),haftalik:vWeekly,islem:vIslem,rotasyon:vRot,seminer:vSem,kongre:vKon,kadro:vKadro,yonetim:vYonetim,duyuru:vDuyuru,profil:vProfil};
 
 /* ---------- çizim ---------- */
 const route=()=>{const r=(location.hash||'').replace(/^#/,'');return VIEWS[r]?r:'ana';};
@@ -1754,6 +1784,15 @@ A.onayla=async el=>{const id=el.dataset.id;await W(()=>S.db.doc('onay/'+id).set(
 A.reddet=async el=>{const id=el.dataset.id;const k=S.kayit[id];if(!await askConfirm(`${k?k.adSoyad:'Bu'} kaydı reddedilip silinsin mi?`,'Reddet'))return;await W(async()=>{await S.db.doc('kayit/'+id).delete();try{await S.db.doc('kisi/'+id).delete();}catch(_){}},'Kayıt reddedildi');};
 A.kayitSil=async el=>{const id=el.dataset.id;const k=S.kayit[id];if(!await askConfirm(`${k?k.adSoyad:'Bu kişi'} portaldan çıkarılsın mı? Kaydı ve onayı silinir.`,'Çıkar'))return;await W(async()=>{await S.db.doc('onay/'+id).delete();await S.db.doc('kayit/'+id).delete();try{await S.db.doc('kisi/'+id).delete();}catch(_){}if(S.owner&&S.yetki.includes(id))await S.db.doc('yetki/liste').set({uids:S.yetki.filter(x=>x!==id)});},'Kişi çıkarıldı');};
 A.pwToggle=el=>{const i=document.getElementById(el.dataset.for);if(!i)return;const show=i.type==='password';i.type=show?'text':'password';el.setAttribute('aria-pressed',String(show));el.setAttribute('aria-label',show?'Şifreyi gizle':'Şifreyi göster');el.innerHTML=ic(show?'eyeoff':'eye');};
+A.gbNew=()=>openSheet('Öneri ya da sorun bildir',`<div class="gb-tur" role="radiogroup" aria-label="Tür"><label><input type="radio" name="gb-t" value="oneri" checked><span>💡 Öneri</span></label><label><input type="radio" name="gb-t" value="sorun"><span>🐞 Sorun</span></label></div><label class="fld"><span>Ne yazmak istersin?</span><textarea id="gb-m" rows="6" maxlength="2000" placeholder="Örn. Seminer sayfasına sunum dosyası eklenebilsin. / Haftalık listede adım görünmüyor."></textarea></label><p class="hint" style="margin-top:-8px">Bir sorunsa hangi sayfada ve ne yaparken olduğunu yazarsan daha hızlı çözülür. Adınla birlikte yalnızca yöneticilere gider.</p><button class="btn block" data-act="gbSave">Gönder</button>`);
+A.gbSave=async()=>{const m=($('#gb-m').value||'').trim();if(m.length<3)return toast('Birkaç kelime yaz.','err');const t=(document.querySelector('input[name="gb-t"]:checked')||{}).value||'oneri';const k=me()||{};
+ const body={u:S.uid,ad:k.adSoyad||'',tur:t,metin:m,sayfa:S.prevRoute||'',cihaz:cihaz(),ts:Date.now(),durum:'yeni'};
+ if(await W(()=>S.db.collection('geribildirim').doc().set(body),'Gönderildi, teşekkürler')){closeSheet();if(location.hash!=='#oneri')location.hash='#oneri';}};
+A.gbDur=async el=>{const id=el.dataset.id,v=el.dataset.v;const x=S.geri[id];if(!x)return;const nv=(x.durum||'yeni')===v?'bakiliyor':v;await W(()=>S.db.doc('geribildirim/'+id).update({durum:nv,durumTs:Date.now(),by:S.uid}));};
+A.gbYanit=el=>{const id=el.dataset.id;const x=S.geri[id]||{};openSheet('Yanıtla',`<p class="hint" style="margin-top:0"><b>${esc(nameOf(x.u)||x.ad||'')}</b>: ${esc(x.metin||'')}</p><label class="fld"><span>Yanıtın</span><textarea id="gb-y" rows="5" maxlength="1500">${esc(x.yanit||'')}</textarea></label><label class="chk"><input type="checkbox" id="gb-yd"${(x.durum||'yeni')==='yapildi'?' checked':''}>Yapıldı olarak işaretle</label><p class="hint">Yanıt, gönderen kişiye bildirim olarak gider.</p><button class="btn block" data-act="gbYSave" data-id="${esc(id)}">Gönder</button>`);};
+A.gbYSave=async el=>{const id=el.dataset.id;const x=S.geri[id]||{};const y=($('#gb-y').value||'').trim();if(!y)return toast('Yanıt yaz.','err');const d=$('#gb-yd').checked?'yapildi':((x.durum||'yeni')==='yeni'?'bakiliyor':x.durum);
+ if(await W(()=>S.db.doc('geribildirim/'+id).update({yanit:y,yanitTs:Date.now(),by:S.uid,durum:d,durumTs:Date.now()}),'Yanıt gönderildi'))closeSheet();};
+A.gbDel=async el=>{const id=el.dataset.id;if(!await askConfirm('Bu bildirim silinsin mi?','Sil'))return;await W(()=>S.db.doc('geribildirim/'+id).delete(),'Silindi');};
 A.pushOn=async()=>{try{const t=await S.push.token(true);await pushSave(t);toast('Bildirimler bu cihazda açıldı');}catch(e){console.warn('push',e);toast(e&&e.code==='denied'?'Bildirim izni verilmedi. Tarayıcı ayarlarından bu siteye izin vermen gerekiyor.':'Bildirimler açılamadı, birazdan tekrar dene.','err');}render();};
 A.pushOff=async()=>{const t=pushTok();pushSet('off');if(t&&t!=='off'){try{await S.db.doc('cihazlar/'+t).delete();}catch(e){}}if(S.push)await S.push.drop();toast('Bildirimler bu cihazda kapatıldı');render();};
 A.pushLater=()=>{try{localStorage.setItem('ap-push-sor',String(Date.now()));}catch(e){}render();};
@@ -1862,10 +1901,11 @@ function sub(key,ref,fn){const u=ref.onSnapshot(snap=>{try{fn(snap);}catch(e){co
 function retryDenied(){const d=S.denied;if(!d)return;const ks=Object.keys(d);if(!ks.length)return;S.denied={};ks.forEach(k=>{try{d[k]();}catch(e){console.warn('retry',k,e);}});}
 function accessKey(){return (S.uid&&S.onay&&S.onay[S.uid]?'o':'')+(S.owner?'s':'')+(S.uid&&(S.yetki||[]).includes(S.uid)?'y':'');}
 function accessChanged(){const k=accessKey();if(S.accKey!==undefined&&k!==S.accKey&&k)retryDenied();S.accKey=k;}
-function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.denied={};S.accKey=undefined;S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];S.oturum={};S.hareket=[];S.lastLogR=null;}
+function unsubAll(){(S.unsubs||[]).forEach(f=>{try{f();}catch(e){}});S.unsubs=[];S.denied={};S.accKey=undefined;S.got=new Set();['kayit','onay','duyurular','nobet','haftalik','rotasyon','seminer','kongre','katilim','kisi','takas','izin','izdonem'].forEach(k=>S[k]={});S.yetki=[];S.ayar={};S.kadro={uzmanlar:[]};S.kisiMe=null;S.islem=null;S.islemLocal=null;S.sohbet=[];S.oturum={};S.geri={};S.geriMine={};S.hareket=[];S.lastLogR=null;}
 function subscribeAll(){const db=S.db;const col=(key,path)=>sub(key,db.collection(path),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=stdDoc(d.data());});S[key]=o;if(key==='onay')accessChanged();});
  col('kayit','kayit');col('takas','takas');col('izin','izin');col('izdonem','izdonem');
  {const c=db.collection('sohbet');if(c.recent)sub('sohbet',c.recent(150,'ts'),snap=>{S.sohbet=snap.docs.map(d=>Object.assign({id:d.id},stdDoc(d.data()))).sort((a,b)=>a.ts-b.ts);});}col('onay','onay');col('duyurular','duyurular');col('nobet','nobet');col('haftalik','haftalik');col('rotasyon','rotasyon');col('seminer','seminer');col('kongre','kongre');col('katilim','katilim');
+ col('geri','geribildirim');if(S.uid){const gc=db.collection('geribildirim');if(gc.where)sub('geriMine',gc.where('u',S.uid),snap=>{const o={};snap.docs.forEach(d=>{if(d.exists)o[d.id]=stdDoc(d.data());});S.geriMine=o;});}
  sub('yetki',db.doc('yetki/liste'),s=>{const d=s.exists?s.data():null;S.yetki=d&&Array.isArray(d.uids)?d.uids.slice():[];accessChanged();});
  sub('ayar',db.doc('ayar/genel'),s=>{S.ayar=s.exists?s.data():{};});
  sub('kadro',db.doc('kadro/uzmanlar'),s=>{S.kadro=s.exists?s.data():{uzmanlar:[]};});

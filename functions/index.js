@@ -107,3 +107,17 @@ exports.sohbet = fn.firestore.document('sohbet/{id}').onCreate(async snap => {
   if (!m.metin) return;
   await gonder(await onayliler(), '💬 ' + kisa(m.ad || 'Sohbet', 40), kisa(m.metin, 160), 'sohbet', m.u, { sohbet: true });
 });
+
+// 6) Öneri / sorun bildirimi → yöneticiler; yanıt ya da "yapıldı" → gönderen
+exports.geriBildirim = fn.firestore.document('geribildirim/{id}').onWrite(async ch => {
+  if (!ch.after.exists) return;
+  const x = ch.after.data() || {}, o = ch.before.exists ? ch.before.data() || {} : null;
+  if (!o) {
+    const t = x.tur === 'sorun' ? '🐞 Sorun bildirildi' : '💡 Yeni öneri';
+    return gonder(await yoneticiler(), t, `${x.ad || 'Bir kullanıcı'}: ${kisa(x.metin, 140)}`, 'oneri', x.u);
+  }
+  if (x.yanit && x.yanit !== o.yanit)
+    return gonder([x.u], x.durum === 'yapildi' ? '✅ Önerin hayata geçti' : '💬 Bildirimine yanıt geldi', kisa(x.yanit, 160), 'oneri', x.by);
+  if (x.durum === 'yapildi' && o.durum !== 'yapildi')
+    return gonder([x.u], x.tur === 'sorun' ? '✅ Bildirdiğin sorun çözüldü' : '✅ Önerin hayata geçti', kisa(x.metin, 120), 'oneri', x.by);
+});

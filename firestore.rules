@@ -70,6 +70,16 @@ service cloud.firestore {
       allow delete: if onayli() && (resource.data.u == me() || yetkili());
     }
 
+    // Öneri / sorun bildirimleri: herkes kendi gönderdiğini görür, yetkililer hepsini görür ve yanıtlar
+    match /geribildirim/{id} {
+      allow create: if onayli() && request.resource.data.u == me()
+        && request.resource.data.metin is string && request.resource.data.metin.size() <= 2000
+        && request.resource.data.durum == 'yeni';
+      allow read: if yetkili() || (signed() && resource.data.u == me());
+      allow update: if yetkili();
+      allow delete: if sahip() || (signed() && resource.data.u == me() && resource.data.durum == 'yeni');
+    }
+
     // Bildirim cihazları: belge adı cihazın bildirim anahtarıdır; herkes yalnızca kendi cihazını yazar, kimse listeleyemez
     match /cihazlar/{t} {
       allow create, update: if signed() && request.resource.data.u == me();
