@@ -1,0 +1,24 @@
+name: Firebase (bildirimler ve kurallar)
+on:
+  push:
+    branches: [main]
+    paths: ['functions/**', 'firestore.rules', 'firebase.json', '.github/workflows/firebase.yml']
+  workflow_dispatch:
+concurrency: firebase-deploy
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Anahtar
+        env: { SA: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' }
+        run: |
+          if [ -z "$SA" ]; then echo "::error::FIREBASE_SERVICE_ACCOUNT gizli anahtarı eklenmemiş"; exit 1; fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/sa.json" >> "$GITHUB_ENV"
+      - run: npm install --no-audit --no-fund
+        working-directory: functions
+      - name: Yükle
+        run: npx -y firebase-tools@latest deploy --only functions,firestore:rules --project anastezi-portal --non-interactive --force

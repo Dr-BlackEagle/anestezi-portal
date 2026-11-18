@@ -70,6 +70,14 @@ service cloud.firestore {
       allow delete: if onayli() && (resource.data.u == me() || yetkili());
     }
 
+    // Bildirim cihazları: belge adı cihazın bildirim anahtarıdır; herkes yalnızca kendi cihazını yazar, kimse listeleyemez
+    match /cihazlar/{t} {
+      allow create, update: if signed() && request.resource.data.u == me();
+      allow delete: if signed() && (resource.data.u == me() || sahip());
+      allow get: if signed() && resource.data.u == me();
+      allow list: if false;
+    }
+
     // Kullanım izleme: herkes kendi oturumunu ve hareketini yazar, yalnızca portal sahibi okur
     match /oturum/{uid} {
       allow read: if sahip();
