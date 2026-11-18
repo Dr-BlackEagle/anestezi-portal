@@ -19,7 +19,7 @@ async function sahipUid() { const d = await db.doc('meta/sahip').get(); return d
 async function onayliler() { const q = await db.collection('onay').get(); const s = new Set(q.docs.map(d => d.id)); const o = await sahipUid(); if (o) s.add(o); return [...s]; }
 async function yoneticiler() { const s = new Set(); const o = await sahipUid(); if (o) s.add(o); const y = await db.doc('yetki/liste').get(); if (y.exists) (y.data().uids || []).forEach(u => s.add(u)); return [...s]; }
 
-async function gonder(uids, title, body, hash, haric) {
+async function gonder(uids, title, body, hash, haric, opt = {}) {
   uids = [...new Set(uids.filter(u => u && u !== haric))];
   if (!uids.length) return;
   const docs = [];
@@ -28,7 +28,9 @@ async function gonder(uids, title, body, hash, haric) {
     docs.push(...q.docs);
   }
   if (!docs.length) return;
-  const tokens = docs.map(d => d.id);
+  // Sohbet bildirimini bu cihazda kapatanlara sohbet mesajı gitmez
+  const tokens = docs.filter(d => !opt.sohbet || d.data().sohbet !== false).map(d => d.id);
+  if (!tokens.length) return;
   const link = URL + (hash ? '#' + hash : '');
   for (let i = 0; i < tokens.length; i += 500) {
     const part = tokens.slice(i, i + 500);
@@ -97,4 +99,11 @@ exports.yeniKayit = fn.firestore.document('kayit/{uid}').onCreate(async (snap, c
   const onay = await db.doc('onay/' + ctx.params.uid).get();
   if (onay.exists) return;
   await gonder(await yoneticiler(), '🛡️ Yeni kayıt onay bekliyor', `${k.adSoyad || 'Yeni kişi'} (${k.unvan === 'uzman' ? 'uzman' : 'asistan'}) portala kaydoldu.`, 'yonetim', ctx.params.uid);
+});
+
+// 6) Sohbette yeni mesaj → yazan hariç herkes (sohbet bildirimini kapatanlar hariç)
+exports.sohbet = fn.firestore.document('sohbet/{id}').onCreate(async snap => {
+  const m = snap.data() || {};
+  if (!m.metin) return;
+  await gonder(await onayliler(), '💬 ' + kisa(m.ad || 'Sohbet', 40), kisa(m.metin, 160), 'sohbet', m.u, { sohbet: true });
 });

@@ -1462,22 +1462,23 @@ const PUSHK='ap-push';
 function pushTok(){try{return localStorage.getItem(PUSHK)||'';}catch(e){return '';}}
 function pushSet(v){try{if(v)localStorage.setItem(PUSHK,v);else localStorage.removeItem(PUSHK);}catch(e){}}
 const isIOS=()=>/iPhone|iPad|iPod/i.test(navigator.userAgent),standalone=()=>navigator.standalone===true||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
-async function pushSave(tok){if(!tok||!S.uid)return;pushSet(tok);await S.db.doc('cihazlar/'+tok).set({u:S.uid,ts:Date.now(),cihaz:cihaz()});}
+function pushChat(){try{return localStorage.getItem('ap-push-sohbet')!=='0';}catch(e){return true;}}
+async function pushSave(tok){if(!tok||!S.uid)return;pushSet(tok);await S.db.doc('cihazlar/'+tok).set({u:S.uid,ts:Date.now(),cihaz:cihaz(),sohbet:pushChat()});}
 async function pushInit(){if(!S.push||S.pushInitDone||!approved())return;S.pushInitDone=1;
  S.pushOk=await S.push.supported();
  if(S.pushOk&&S.push.permission()==='granted'&&pushTok()!=='off'){try{const t=await S.push.token(false);if(t)await pushSave(t);}catch(e){console.warn('push',e);}}
- if(S.pushOk)S.push.onMessage((d,n)=>{const t=n.title||d.title||'',b=n.body||d.body||'';toast(t+(b?' — '+b:''));});
+ if(S.pushOk)S.push.onMessage((d,n)=>{if(/#sohbet$/.test(d.link||'')&&route()==='sohbet')return;const t=n.title||d.title||'',b=n.body||d.body||'';toast(t+(b?' — '+b:''));});
  schedule();}
 function pushState(){if(!S.push)return 'bekle';if(S.pushOk===undefined)return 'bekle';if(!S.pushOk)return isIOS()&&!standalone()?'ios':'yok';const p=S.push.permission();if(p==='denied')return 'red';if(p==='granted'&&pushTok()&&pushTok()!=='off')return 'acik';return 'kapali';}
 function pushCard(){const st=pushState();if(st==='bekle')return '';
- const x={acik:['Bu cihazda açık','Yeni duyuru, nöbet listesi, nöbet değişimleri'+(yetkili()?' ve yönetici uyarıları':'')+' telefonuna bildirim olarak gelir.',`<button class="btn sm ghost" data-act="pushOff">Bu cihazda kapat</button>`],
-  kapali:['Kapalı','Yeni duyuru, nöbet listesi ve nöbet değişimlerinden anında haberin olsun.',`<button class="btn sm" data-act="pushOn">${ic('bell')}Bildirimleri aç</button>`],
+ const x={acik:['Bu cihazda açık','Yeni duyuru, nöbet listesi, nöbet değişimleri, sohbet mesajları'+(yetkili()?' ve yönetici uyarıları':'')+' telefonuna bildirim olarak gelir.',`<label class="chk" style="margin:-4px 0 6px"><input type="checkbox" data-ch="pushChat"${pushChat()?' checked':''}>Sohbet mesajlarında da bildir</label><button class="btn sm ghost" data-act="pushOff">Bu cihazda kapat</button>`],
+  kapali:['Kapalı','Yeni duyuru, nöbet listesi, nöbet değişimleri ve sohbet mesajlarından anında haberin olsun.',`<button class="btn sm" data-act="pushOn">${ic('bell')}Bildirimleri aç</button>`],
   red:['İzin yok','Tarayıcı bu siteye bildirim izni vermiyor. Adres çubuğundaki simgeye dokun → İzinler → Bildirimler → İzin ver; sonra sayfayı yenile.',''],
   ios:['Ana ekrana ekle','iPhone’da bildirim almak için portalı Safari’de açıp Paylaş → Ana Ekrana Ekle de. Sonra ana ekrandaki simgeden açıp buradan bildirimleri aç.',''],
   yok:['Desteklenmiyor','Bu tarayıcı bildirimleri desteklemiyor. Android’de Chrome ile açmayı dene.','']}[st];
  return `<section class="card" id="push-card"><div class="card-h"><h2>Bildirimler</h2><span class="pill${st==='acik'?' ok':''}">${x[0]}</span></div><p class="hint" style="margin:0 0 10px">${x[1]}</p>${x[2]}</section>`;}
 function pushBanner(){const st=pushState();if(st!=='kapali'&&st!=='ios')return '';let t=0;try{t=+localStorage.getItem('ap-push-sor')||0;}catch(e){}if(Date.now()-t<7*864e5)return '';
- return `<div class="banner"><div><b>Bildirimleri aç</b><small>${st==='ios'?'iPhone’da önce portalı ana ekrana eklemen gerekiyor.':'Duyuru, nöbet listesi ve nöbet değişimleri telefonuna gelsin.'}</small></div><div style="display:flex;gap:6px">${st==='ios'?`<a class="btn sm" href="#profil">Nasıl?</a>`:`<button class="btn sm" data-act="pushOn">Aç</button>`}<button class="btn sm ghost" data-act="pushLater">Sonra</button></div></div>`;}
+ return `<div class="banner"><div><b>Bildirimleri aç</b><small>${st==='ios'?'iPhone’da önce portalı ana ekrana eklemen gerekiyor.':'Duyuru, nöbet listesi, nöbet değişimi ve sohbet mesajları telefonuna gelsin.'}</small></div><div style="display:flex;gap:6px">${st==='ios'?`<a class="btn sm" href="#profil">Nasıl?</a>`:`<button class="btn sm" data-act="pushOn">Aç</button>`}<button class="btn sm ghost" data-act="pushLater">Sonra</button></div></div>`;}
 async function pushLogout(){const t=pushTok();if(t&&t!=='off'){try{await S.db.doc('cihazlar/'+t).delete();}catch(e){}pushSet('');}S.pushInitDone=0;}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')ping(true);});
 const agoTxt=ts=>{const d=(Date.now()-ts)/1000;if(d<90)return 'şimdi';if(d<3600)return `${Math.round(d/60)} dk önce`;if(d<86400)return `${Math.round(d/3600)} sa önce`;const g=Math.round(d/86400);return g===1?'dün':`${g} gün önce`;};
@@ -1851,7 +1852,7 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('[role="button"][data-act]')){e.preventDefault();e.target.click();}if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet();});
 document.addEventListener('submit',e=>{const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();const fn=FORMS[f.dataset.form];if(fn)fn(f);});
 document.addEventListener('input',e=>{const el=e.target;if(el.id==='ch-t'){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,140)+'px';}if(el.id==='f-tc'||el.id==='l-tc'){const d=el.value.replace(/\D/g,'').slice(0,11);if(d!==el.value)el.value=d;}if(el.getAttribute&&el.getAttribute('aria-invalid')==='true'){el.removeAttribute('aria-invalid');const x=document.getElementById('e-'+el.id);if(x)x.hidden=true;}if(el.dataset&&el.dataset.in){S.ui[el.dataset.in]=el.value;schedule();}});
-document.addEventListener('change',e=>{const el=e.target;if(!el.dataset||!el.dataset.ch)return;const k=el.dataset.ch;if(k==='annSz'){const d=$('#a-e');if(d){d.disabled=el.checked;if(!el.checked&&!d.value)d.value=addDays(todayStr(),7);}return;}if(k==='fAd'){const ks=$('#f-kisa');if(ks&&!ks.value.trim()){const f=String(el.value).trim().split(/\s+/)[0];if(f)ks.value=up(f);}return;}if(k==='iTarih'){const v=el.value;S.ui.iTarih=v&&v<=todayStr()?v:null;}else if(k==='rKisi'){S.ui.rKisi=+el.value;}render();});
+document.addEventListener('change',e=>{const el=e.target;if(!el.dataset||!el.dataset.ch)return;const k=el.dataset.ch;if(k==='pushChat'){try{localStorage.setItem('ap-push-sohbet',el.checked?'1':'0');}catch(x){}const t=pushTok();if(t&&t!=='off')pushSave(t).then(()=>toast(el.checked?'Sohbet bildirimleri açıldı':'Sohbet bildirimleri kapatıldı')).catch(()=>toast('Kaydedilemedi, tekrar dene.','err'));return;}if(k==='annSz'){const d=$('#a-e');if(d){d.disabled=el.checked;if(!el.checked&&!d.value)d.value=addDays(todayStr(),7);}return;}if(k==='fAd'){const ks=$('#f-kisa');if(ks&&!ks.value.trim()){const f=String(el.value).trim().split(/\s+/)[0];if(f)ks.value=up(f);}return;}if(k==='iTarih'){const v=el.value;S.ui.iTarih=v&&v<=todayStr()?v:null;}else if(k==='rKisi'){S.ui.rKisi=+el.value;}render();});
 window.addEventListener('hashchange',()=>{closeSheet();render();});
 
 /* ---------- veri bağlantısı ---------- */
