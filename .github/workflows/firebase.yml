@@ -21,4 +21,4 @@ jobs:
       - run: npm install --no-audit --no-fund
         working-directory: functions
       - name: Yükle
-        run: npx -y firebase-tools@latest deploy --only functions,firestore:rules --project anastezi-portal --non-interactive --force
+        run: npx -y firebase-tools@latest deploy --only functions,firestore:rules --project anastezi-portal --non-interactive --force --debug > deploy.log 2>&1 || { grep -iE '"message"|error|denied|permission|reason' deploy.log | tail -60; exit 1; }
