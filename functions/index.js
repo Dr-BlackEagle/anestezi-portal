@@ -141,20 +141,12 @@ exports.yarinNobet = functions.region('europe-west1').pubsub.schedule('0 20 * * 
   const onay = new Set((await db.collection('onay').get()).docs.map(x => x.id));
   const o = await sahipUid(); if (o) onay.add(o);
   const kayit = (await db.collection('kayit').get()).docs.filter(x => onay.has(x.id) && x.data().kisaAd).map(x => ({ uid: x.id, tok: UP(x.data().kisaAd), tip: x.data().unvan === 'uzman' ? 'uzman' : 'asistan' }));
-  // grup → isimler
-  const grp = {};
-  cols.forEach(c => { const v = String(row[c.i] || '').trim(); if (!v) return; const g = c.grup || c.ad; (grp[g] = grp[g] || { uz: [], as: [] })[c.tip === 'uzman' ? 'uz' : 'as'].push(UP(v)); });
   const gunTxt = `${t.getUTCDate()} ${AY[t.getUTCMonth()]} ${GUN[t.getUTCDay()]}`;
   for (const k of kayit) {
     const mine = cols.filter(c => c.tip === k.tip && hasTok(row[c.i], k.tok));
     if (!mine.length) continue;
-    const c = mine[0], g = c.grup || c.ad, x = grp[g] || { uz: [], as: [] };
+    const c = mine[0], g = c.grup || c.ad;
     const yer = grupAd(g) + (c.etiket ? ` (${c.etiket})` : '');
-    const ark = k.tip === 'asistan' ? x.as.filter(v => !hasTok(v, k.tok)) : x.as;
-    const uz = k.tip === 'uzman' ? x.uz.filter(v => !hasTok(v, k.tok)) : x.uz;
-    let body = `${gunTxt} · ${yer}`;
-    if (ark.length) body += `\nBirlikte: ${ark.join(', ')}`;
-    if (uz.length) body += `\nUzman: ${uz.join(', ')}`;
-    await gonder([k.uid], '🌙 Yarın nöbetin var', body, 'nobet');
+    await gonder([k.uid], `🌙 Yarın nöbetin var: ${yer}`, gunTxt, 'nobet');
   }
 });
