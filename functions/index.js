@@ -121,3 +121,40 @@ exports.geriBildirim = fn.firestore.document('geribildirim/{id}').onWrite(async 
   if (x.durum === 'yapildi' && o.durum !== 'yapildi')
     return gonder([x.u], x.tur === 'sorun' ? '✅ Bildirdiğin sorun çözüldü' : '✅ Önerin hayata geçti', kisa(x.metin, 120), 'oneri', x.by);
 });
+
+// 7) Yarın nöbeti olanlara her akşam 20:00'de hatırlatma
+const GUN = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+const UP = s => String(s == null ? '' : s).toLocaleUpperCase('tr-TR').replace(/\s+/g, ' ').trim();
+const hasTok = (cell, tok) => tok && (' ' + UP(String(cell == null ? '' : cell).replace(/[,;·\/]+/g, ' ')) + ' ').includes(' ' + tok + ' ');
+const grupAd = k => /YBÜ|YOĞUN/i.test(k) ? 'Yoğun Bakım' : /AMEL/i.test(k) ? 'Ameliyathane' : /^uzatma$/i.test(k) ? 'Uzatma' : k;
+exports.yarinNobet = functions.region('europe-west1').pubsub.schedule('0 20 * * *').timeZone('Europe/Istanbul').onRun(async () => {
+  // İstanbul saatine göre yarının tarihi
+  const now = new Date(Date.now() + 3 * 3600e3);
+  const t = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  const ds = t.toISOString().slice(0, 10);
+  const doc = await db.doc('nobet/' + ds.slice(0, 7)).get();
+  if (!doc.exists) return;
+  const d = doc.data() || {};
+  const row = (d.gunler || {})[ds];
+  if (!row) return;
+  const cols = (d.sutunlar || []).map((c, i) => Object.assign({}, c, { i }));
+  const onay = new Set((await db.collection('onay').get()).docs.map(x => x.id));
+  const o = await sahipUid(); if (o) onay.add(o);
+  const kayit = (await db.collection('kayit').get()).docs.filter(x => onay.has(x.id) && x.data().kisaAd).map(x => ({ uid: x.id, tok: UP(x.data().kisaAd), tip: x.data().unvan === 'uzman' ? 'uzman' : 'asistan' }));
+  // grup → isimler
+  const grp = {};
+  cols.forEach(c => { const v = String(row[c.i] || '').trim(); if (!v) return; const g = c.grup || c.ad; (grp[g] = grp[g] || { uz: [], as: [] })[c.tip === 'uzman' ? 'uz' : 'as'].push(UP(v)); });
+  const gunTxt = `${t.getUTCDate()} ${AY[t.getUTCMonth()]} ${GUN[t.getUTCDay()]}`;
+  for (const k of kayit) {
+    const mine = cols.filter(c => c.tip === k.tip && hasTok(row[c.i], k.tok));
+    if (!mine.length) continue;
+    const c = mine[0], g = c.grup || c.ad, x = grp[g] || { uz: [], as: [] };
+    const yer = grupAd(g) + (c.etiket ? ` (${c.etiket})` : '');
+    const ark = k.tip === 'asistan' ? x.as.filter(v => !hasTok(v, k.tok)) : x.as;
+    const uz = k.tip === 'uzman' ? x.uz.filter(v => !hasTok(v, k.tok)) : x.uz;
+    let body = `${gunTxt} · ${yer}`;
+    if (ark.length) body += `\nBirlikte: ${ark.join(', ')}`;
+    if (uz.length) body += `\nUzman: ${uz.join(', ')}`;
+    await gonder([k.uid], '🌙 Yarın nöbetin var', body, 'nobet');
+  }
+});
