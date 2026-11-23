@@ -1284,10 +1284,8 @@ function vHome(){const k=me();const gp=greetParts();let h='';
  const navGo=new Set(TABS.map(t=>t[0]));const uzKart=!!uzHome();
  const tl=go=>TILES.find(t=>t.go===go);
  const kucuk=t=>{const s=tileSub(t.go);return `<a class="mt" href="#${t.go}"><span class="ti ${t.c}">${ic(t.i)}</span><b>${t.t}</b>${s[1]?`<small>${esc(s[0])}</small>`:''}</a>`;};
- GRUPLAR.forEach(([ad,gos])=>{const L=gos.map(tl).filter(t=>t&&!navGo.has(t.go)&&!(t.go==='uzayan'&&uzKart));if(!L.length)return;
-  h+=`<section class="sec"><div class="sec-h"><h2>${ad}</h2></div><nav class="mtiles" aria-label="${ad}">${L.map(kucuk).join('')}</nav></section>`;});
- const rest=TILES.filter(t=>!GRUPLAR.some(g=>g[1].includes(t.go))&&!navGo.has(t.go));
- if(rest.length)h+=`<section class="sec"><div class="sec-h"><h2>Diğer</h2></div><nav class="mtiles">${rest.map(kucuk).join('')}</nav></section>`;
+ const sira=GRUPLAR.flatMap(g=>g[1]).map(tl).concat(TILES.filter(t=>!GRUPLAR.some(g=>g[1].includes(t.go)))).filter(t=>t&&!navGo.has(t.go)&&!(t.go==='uzayan'&&uzKart));
+ if(sira.length)h+=`<nav class="mtiles" aria-label="Bölümler" style="margin-top:4px">${sira.map(kucuk).join('')}</nav>`;
  if(yetkili()){const s=tileSub('yonetim');h+=`<nav class="tiles" style="margin-top:6px"><a class="tile wide adm" href="#yonetim"><span class="ti t-slate">${ic('shield')}</span><span><b>Yönetici Paneli</b><small class="${s[1]?'hot':''}">${esc(s[0]||'')}</small></span></a></nav>`;}
  return {title:'Asistan Portal',home:true,hero:{eb:gp.eb,g:gp.g,name:firstName(k),ini:k?initials(k.adSoyad):''},body:h};}
 
