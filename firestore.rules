@@ -100,6 +100,18 @@ service cloud.firestore {
       allow delete: if sahip();
     }
 
+    // Vizit listeleri (Preanestezi Özet eklentisinden): onaylılar okur ve kendi adına paylaşır;
+    // paylaşan ya da yetkili siler; değiştirilemez. Bulut fonksiyonu 3 gün sonra siler.
+    match /vizit/{id} {
+      allow read: if onayli();
+      allow create: if onayli() && request.resource.data.u == me()
+                    && request.resource.data.gruplar is list && request.resource.data.gruplar.size() <= 30
+                    && request.resource.data.bitis is number
+                    && request.resource.data.bitis <= request.time.toMillis() + 4 * 24 * 3600 * 1000;
+      allow update: if false;
+      allow delete: if onayli() && (resource.data.u == me() || yetkili());
+    }
+
     match /takas/{id} {
       allow read, create, update: if onayli();
       allow delete: if yetkili();
