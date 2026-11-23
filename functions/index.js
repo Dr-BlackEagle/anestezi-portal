@@ -163,3 +163,40 @@ exports.vizitTemizle = functions.region('europe-west1').pubsub.schedule('15 3 * 
   const q = await db.collection('vizit').where('bitis', '<', Date.now()).get();
   await Promise.all(q.docs.map(d => d.ref.delete().catch(() => {})));
 });
+
+// 10) Uzayan masa eklendi → bugünün nöbetçi asistanları; karar verildi → masayı ekleyen
+async function bugunNobetciler() {
+  const now = new Date(Date.now() + 3 * 3600e3);
+  const ds = now.toISOString().slice(0, 10);
+  const doc = await db.doc('nobet/' + ds.slice(0, 7)).get();
+  if (!doc.exists) return [];
+  const d = doc.data() || {}, row = (d.gunler || {})[ds];
+  if (!row) return [];
+  const cols = (d.sutunlar || []).map((c, i) => Object.assign({}, c, { i })).filter(c => c.tip !== 'uzman');
+  const onay = new Set((await db.collection('onay').get()).docs.map(x => x.id));
+  const o = await sahipUid(); if (o) onay.add(o);
+  return (await db.collection('kayit').get()).docs
+    .filter(x => onay.has(x.id) && x.data().kisaAd && x.data().unvan !== 'uzman')
+    .filter(x => cols.some(c => hasTok(row[c.i], UP(x.data().kisaAd))))
+    .map(x => x.id);
+}
+const masaTxt = x => `${x.blok && x.blok !== 'Diğer' ? x.blok + ' ' : ''}${x.masa}`;
+exports.uzayanMasa = fn.firestore.document('uzayan/{id}').onWrite(async ch => {
+  if (!ch.after.exists) return;
+  const x = ch.after.data() || {}, o = ch.before.exists ? ch.before.data() || {} : null;
+  if (!o) {
+    const sure = x.bitis ? `~${new Date(x.bitis + 3 * 3600e3).toISOString().slice(11, 16)}` : 'süre bilinmiyor';
+    const body = [x.cerrahi, sure, x.asama].filter(Boolean).join(' · ') + `\nEkleyen: ${x.ad || ''}`;
+    return gonder(await bugunNobetciler(), `🕓 Uzayan masa: ${masaTxt(x)} · ${kisa(x.vaka, 40)}`, body, 'uzayan', x.u);
+  }
+  if (x.karar && x.karar !== o.karar && x.kararU !== x.u) {
+    if (x.karar === 'devral') return gonder([x.u], `🤝 ${masaTxt(x)} masanı ${x.kararAd} devralacak`, kisa(x.vaka, 60), 'uzayan', x.kararU);
+    if (x.karar === 'devam') return gonder([x.u], `↪ ${masaTxt(x)}: devam etmen istendi`, `${x.kararAd} devralamıyor · ${kisa(x.vaka, 60)}`, 'uzayan', x.kararU);
+  }
+});
+
+// 11) 3 günden eski uzayan masa kayıtlarını her gece sil
+exports.uzayanTemizle = functions.region('europe-west1').pubsub.schedule('30 3 * * *').timeZone('Europe/Istanbul').onRun(async () => {
+  const q = await db.collection('uzayan').where('ts', '<', Date.now() - 3 * 864e5).get();
+  await Promise.all(q.docs.map(d => d.ref.delete().catch(() => {})));
+});

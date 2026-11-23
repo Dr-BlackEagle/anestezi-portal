@@ -70,6 +70,15 @@ service cloud.firestore {
       allow delete: if onayli() && (resource.data.u == me() || yetkili());
     }
 
+    // Uzayan masalar: onaylılar görür ve ekler; herkes durum/karar güncelleyebilir; ekleyen ya da yetkili siler
+    match /uzayan/{id} {
+      allow read: if onayli();
+      allow create: if onayli() && request.resource.data.u == me()
+        && request.resource.data.vaka is string && request.resource.data.vaka.size() <= 200;
+      allow update: if onayli() && request.resource.data.u == resource.data.u && request.resource.data.ts == resource.data.ts;
+      allow delete: if onayli() && (resource.data.u == me() || yetkili());
+    }
+
     // Öneri / sorun bildirimleri: herkes kendi gönderdiğini görür, yetkililer hepsini görür ve yanıtlar
     match /geribildirim/{id} {
       allow create: if onayli() && request.resource.data.u == me()
