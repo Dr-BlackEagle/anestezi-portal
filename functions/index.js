@@ -150,3 +150,16 @@ exports.yarinNobet = functions.region('europe-west1').pubsub.schedule('0 20 * * 
     await gonder([k.uid], `🌙 Yarın nöbetin var: ${yer}`, gunTxt, 'nobet');
   }
 });
+
+// 8) Vizit listesi paylaşıldı → onaylı herkes (paylaşan hariç)
+exports.vizitListesi = fn.firestore.document('vizit/{id}').onCreate(async snap => {
+  const v = snap.data() || {};
+  const ek = [v.toplam ? `${v.toplam} hasta` : '', v.ybu ? `${v.ybu} postop YBÜ` : ''].filter(Boolean).join(' · ');
+  await gonder(await onayliler(), '🩺 Vizit listesi paylaşıldı', `${ilk(v.ad) || 'Bir asistan'}: ${kisa(v.baslik || 'Vizit listesi', 90)}${ek ? ' · ' + ek : ''}`, 'vizit', v.u);
+});
+
+// 9) Süresi dolan vizit listelerini her gece sil (hasta bilgisi gereğinden uzun saklanmasın)
+exports.vizitTemizle = functions.region('europe-west1').pubsub.schedule('15 3 * * *').timeZone('Europe/Istanbul').onRun(async () => {
+  const q = await db.collection('vizit').where('bitis', '<', Date.now()).get();
+  await Promise.all(q.docs.map(d => d.ref.delete().catch(() => {})));
+});
