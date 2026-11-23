@@ -79,6 +79,13 @@ service cloud.firestore {
       allow delete: if onayli() && (resource.data.u == me() || yetkili());
     }
 
+    // Nöbetçinin "uzayan masa var mı?" sorusu
+    match /uzsor/{id} {
+      allow read: if onayli();
+      allow create: if onayli() && request.resource.data.u == me();
+      allow delete: if yetkili();
+    }
+
     // Öneri / sorun bildirimleri: herkes kendi gönderdiğini görür, yetkililer hepsini görür ve yanıtlar
     match /geribildirim/{id} {
       allow create: if onayli() && request.resource.data.u == me()

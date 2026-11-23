@@ -200,3 +200,11 @@ exports.uzayanTemizle = functions.region('europe-west1').pubsub.schedule('30 3 *
   const q = await db.collection('uzayan').where('ts', '<', Date.now() - 3 * 864e5).get();
   await Promise.all(q.docs.map(d => d.ref.delete().catch(() => {})));
 });
+
+// 12) Nöbetçi "uzayan masa var mı?" diye sordu → tüm asistanlar
+exports.uzayanSor = fn.firestore.document('uzsor/{id}').onCreate(async snap => {
+  const x = snap.data() || {};
+  const onay = new Set(await onayliler());
+  const as = (await db.collection('kayit').get()).docs.filter(d => onay.has(d.id) && d.data().unvan !== 'uzman').map(d => d.id);
+  await gonder(as, '🕓 Uzayan masa var mı?', `${ilk(x.ad) || 'Nöbetçi'} soruyor: masan uzayacaksa portala ekle.`, 'uzayan', x.u);
+});
