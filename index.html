@@ -1688,12 +1688,15 @@ function uzForm(x){x=x||{};const lb=(()=>{try{return localStorage.getItem('ap-uz
 // Paylaşılan liste "vizit" koleksiyonuna yazılır (3 gün sonra otomatik silinir), onaylı herkese bildirim gider.
 const VZ_SAAT=72;
 const VZ_HUCRE=['Hb','Plt','INR','EKG','PAAC','Alerji','Sigara'];
+// Hasta gizliliği: ad ve soyadın her kelimesinde ilk 3 harf görünür, kalanı *; protokol numarası da aynı şekilde
+const vzGizle=v=>String(v==null?'':v).split(/(\s+)/).map(w=>/\s/.test(w)||!w?w:[...w].map((c,i)=>i<3||/[.\-]/.test(c)?c:'*').join('')).join('');
+const vzGizliX=x=>x?Object.assign({},x,{gruplar:(x.gruplar||[]).map(gr=>Object.assign({},gr,{hastalar:(gr.hastalar||[]).map(p=>Object.assign({},p,{ad:vzGizle(p.ad),protokol:vzGizle(p.protokol)}))}))}):x;
 const vzAktif=x=>x&&(+x.bitis||0)>Date.now();
-const vzSorted=()=>Object.entries(S.vizit||{}).filter(([,x])=>vzAktif(x)).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+const vzSorted=()=>Object.entries(S.vizit||{}).filter(([,x])=>vzAktif(x)).map(([id,x])=>[id,vzGizliX(x)]).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
 function vzTemiz(d){if(!d||d.type!=='vizit-listesi'||!Array.isArray(d.gruplar))return null;const str=(v,n)=>String(v==null?'':v).slice(0,n);const arr=(v,n)=>Array.isArray(v)?v.slice(0,n):[];
  const huc=c=>({t:str(c&&c.t,80)||'–',b:c&&c.b?1:0,g:c&&c.g?1:0});
  const g=arr(d.gruplar,30).map(gr=>({masa:str(gr.masa,6),hastalar:arr(gr.hastalar,80).map(h=>{const hc={};VZ_HUCRE.forEach(k=>{hc[k]=huc(h.hucre&&h.hucre[k]);});
-  return {ad:str(h.ad,80),yas:str(h.yas,4),cins:str(h.cins,1),yatak:str(h.yatak,20),protokol:str(h.protokol,14),masa:str(h.masa,6),ameliyat:str(h.ameliyat,200),kan:str(h.kan,40),asa:str(h.asa,5),
+  return {ad:vzGizle(str(h.ad,80)),yas:str(h.yas,4),cins:str(h.cins,1),yatak:str(h.yatak,20),protokol:vzGizle(str(h.protokol,14)),masa:str(h.masa,6),ameliyat:str(h.ameliyat,200),kan:str(h.kan,40),asa:str(h.asa,5),
    ybu:h.ybu&&(h.ybu.d==='sart'||h.ybu.d==='oneri')?{d:h.ybu.d,m:str(h.ybu.m,300),alan:str(h.ybu.alan,60)}:null,hucre:hc,kom:arr(h.kom,12).map(x=>str(x,90)),
    notlar:arr(h.notlar,120).map(n=>({t:str(n&&n.t,4000),b:n&&n.b?1:0,c:['eski','src','soluk'].includes(n&&n.c)?n.c:''})),
    form:h.form?{tarih:str(h.form.tarih,30),kaynak:str(h.form.kaynak,30)}:null,durum:str(h.durum,200)};})}));
@@ -1926,7 +1929,7 @@ A.vzShare=async()=>{const g=S.vizitGelen;if(!g)return;if(!approved())return toas
  const k=me();const now=Date.now();const doc=Object.assign({},g,{u:S.uid,ad:k&&k.adSoyad||'',ts:now,bitis:now+VZ_SAAT*3600e3});
  if(await W(()=>S.db.collection('vizit').doc().set(doc),'Vizit listesi paylaşıldı')){S.vizitGelen=null;S.ui.vzSel=null;render();}};
 A.vzDel=async el=>{const id=el.dataset.id;if(!(await askConfirm('Bu vizit listesi silinsin mi?','Sil')))return;await W(()=>S.db.doc('vizit/'+id).delete(),'Silindi');};
-A.vzPrint=el=>{const x=S.vizit[el.dataset.id];if(!x)return;const w=window.open('','_blank');if(!w)return toast('Yazdırma penceresi açılamadı.','err');
+A.vzPrint=el=>{const x=vzGizliX(S.vizit[el.dataset.id]);if(!x)return;const w=window.open('','_blank');if(!w)return toast('Yazdırma penceresi açılamadı.','err');
  const css=`body{font:11.5px/1.3 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#111;margin:0}h1{font-size:17px;margin:0 0 5px}
  table{width:100%;border-collapse:collapse;table-layout:auto}th{background:#d9d9d9;border:1px solid #555;padding:3px 4px;text-align:left;white-space:nowrap}td{border:1px solid #555;padding:3px 4px;vertical-align:top}
  td.c{text-align:center}.sub{font-size:10.5px;color:#333}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}tr.gray td{background:#ececec}td.g{background:#e3edf7}
