@@ -194,12 +194,8 @@ table.ep{border-collapse:separate;border-spacing:0;width:100%;font-size:14px}.ep
 .ep td.ep-d{width:1%}.ep tr.gec td{opacity:.45}.ep tr.sira td{background:#FFF1C2!important}.ep tr.ben td{background:var(--plum-soft)}.ep tr.bay td{color:var(--muted);font-style:italic}
 :root[data-mode="dark"] .ep tr.sira td{background:rgba(242,183,5,.18)!important}
 .ep-l{margin-bottom:12px}
-.ep-card{background:var(--noise),linear-gradient(160deg,#F7DDF1,#EDBFE3)!important;border-color:#E6B3DA!important}
-.ep-card .ep td{border-top-color:rgba(46,48,73,.12);color:#2E3049}.ep-card .ep td.ep-d{background:#F4D5EC;color:#2E3049}
-.ep-card .ep-k{color:#2E3049}.ep-card .ep-p{color:#4A4C6A}.ep-card .ep tr.ben td{background:#fff}.ep-card .ep tr.bay td{color:#6A6C86}
-.ep-card .ep th{background:#2E3049;color:#fff}
-:root[data-mode="dark"] .ep-card{background:linear-gradient(160deg,rgba(227,163,214,.22),rgba(227,163,214,.10))!important;border-color:rgba(227,163,214,.3)!important}
-:root[data-mode="dark"] .ep-card .ep td,:root[data-mode="dark"] .ep-card .ep-k{color:#FBEFF8}:root[data-mode="dark"] .ep-card .ep-p{color:rgba(244,230,241,.75)}:root[data-mode="dark"] .ep-card .ep td.ep-d{background:#3a2a3a;color:#FBEFF8}:root[data-mode="dark"] .ep-card .ep td{border-top-color:rgba(255,255,255,.12)}
+.ep-l{background:var(--noise),linear-gradient(160deg,#F7DDF1,#EDBFE3)!important;border-color:#E6B3DA!important;color:#2E3049}.ep-l b{color:#2E3049}.ep-l small{color:#4A4C6A}.ep-l .ti{background:#2E3049!important;color:#fff!important}.ep-l .izl-go svg{color:#2E3049}
+:root[data-mode="dark"] .ep-l{background:linear-gradient(160deg,rgba(227,163,214,.22),rgba(227,163,214,.10))!important;border-color:rgba(227,163,214,.3)!important}:root[data-mode="dark"] .ep-l b{color:#FBEFF8}:root[data-mode="dark"] .ep-l small{color:rgba(244,230,241,.75)}:root[data-mode="dark"] .ep-l .ti{background:#E3A3D6!important;color:#2A1027!important}
 .mt{position:relative}.mt-led{position:absolute;top:9px;right:9px;width:10px;height:10px;border-radius:50%;background:#F2B705;box-shadow:0 0 0 0 rgba(242,183,5,.7);animation:mtLed 1.6s ease-out infinite}
 @keyframes mtLed{0%{box-shadow:0 0 0 0 rgba(242,183,5,.75)}70%{box-shadow:0 0 0 9px rgba(242,183,5,0)}100%{box-shadow:0 0 0 0 rgba(242,183,5,0)}}
 .mt.led{border-color:rgba(242,183,5,.6)}
@@ -1698,7 +1694,7 @@ function vEgitimPlani(){const ep=S.ep;const t=todayStr();let acts='';if(ep&&ep.s
  let h=`<p class="hint" style="margin:0 0 10px">${esc(ep.baslik||'')}${saat.length===1?` · Her hafta ${esc(saat[0])}`:''}</p>`;
  h+=`<div class="card ep-card"><div class="ep-wrap"><table class="ep"><thead><tr><th>Tarih</th><th>Konu · Eğitimci · Danışman</th></tr></thead><tbody>${L.map(x=>{const bay=/^bayram$/i.test(x.konu);const me=tok&&trLow(x.egitimci).includes(tok);
   return `<tr class="${x.tarih<t?'gec':''}${x.tarih===nx?' sira':''}${bay?' bay':''}${me?' ben':''}"${x.tarih===nx?' id="ep-sira"':''}><td class="ep-d">${esc(fmtShort(x.tarih))}</td><td><span class="ep-k">${bay?'Bayram tatili':x.konu?esc(x.konu):'<span class="muted">Henüz belirlenmedi</span>'}</span>${x.egitimci?`<small class="ep-p"><b>Eğitimci:</b> ${esc(x.egitimci)}</small>`:''}${x.danisman&&trLow(x.danisman).replace(/[^a-zçğıöşü]/g,'')!==trLow(x.egitimci).replace(/[^a-zçğıöşü]/g,'')?`<small class="ep-p"><b>Danışman:</b> ${esc(x.danisman)}</small>`:''}${saat.length>1&&x.saat?`<small class="ep-p">${esc(x.saat)}</small>`:''}</td></tr>`;}).join('')}</tbody></table></div></div>
- <p class="hint">Sarı satır sıradaki eğitim${tok?'; beyaz satırlar senin anlatacakların':''}. Geçmiş eğitimler soluk görünür.</p>`;
+ <p class="hint">Sarı satır sıradaki eğitim${tok?'; pembe satırlar senin anlatacakların':''}. Geçmiş eğitimler soluk görünür.</p>`;
  return {title:'Yıllık Eğitim Planı',sub:ep.yil?ep.yil+' eğitim yılı':'Seminer programı',acts,body:h};}
 /* ---------- faydalı içerikler ---------- */
 // Protokoller, algoritmalar, doz tabloları ve bağlantılar: yetkililer ekler, onaylı herkes okur.
