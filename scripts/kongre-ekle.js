@@ -1,10 +1,10 @@
-// Tek seferlik: afişlerdeki yaklaşan kongrelerin son bildiri tarihi ve bağlantılarını güncelle
+// Tek seferlik: kayıt bilgileri
 const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
 const G = {
-  '6. Uluslararası Anesteziyoloji ve Reanimasyon Sempozyumu (SBÜ)': { sonBildiri: '2026-10-01', link: 'https://www.anestezisempozyumu.org', not: '"Bilimin izinde, yaşamın nöbetinde" · Sağlık Bilimleri Üniversitesi · 4 Aralık çevrimiçi, 5 Aralık yüz yüze · Kabul edilen sözlü bildirilerin sunum dosyası son yükleme: 1 Aralık 2026' },
-  'TYBD 24. Ulusal Yoğun Bakım Kongresi & 26th International Intensive Care Symposium': { link: 'https://www.yogunbakim.org.tr', not: 'Türk Yoğun Bakım Derneği · Son bildiri tarihi henüz duyurulmadı' }
+  '6. Uluslararası Anesteziyoloji ve Reanimasyon Sempozyumu (SBÜ)': { not: '"Bilimin izinde, yaşamın nöbetinde" · Sağlık Bilimleri Üniversitesi · 4 Aralık çevrimiçi, 5 Aralık yüz yüze · Kayıt açık; son kayıt tarihi ilan edilmemiş. Erken kayıt 15 Eylül\'de bitti; asistan kayıt ücreti şu an 5.000 ₺ · Kabul edilen sözlü bildirilerin sunum dosyası son yükleme: 1 Aralık 2026' },
+  'TYBD 24. Ulusal Yoğun Bakım Kongresi & 26th International Intensive Care Symposium': { not: 'Türk Yoğun Bakım Derneği · Kayıt ve bildiri tarihleri henüz duyurulmadı' }
 };
 (async () => {
   const q = await db.collection('kongre').get();
