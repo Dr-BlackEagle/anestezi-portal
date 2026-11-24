@@ -1,5 +1,11 @@
 name: Tek seferlik - kongre ekle
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      veri:
+        description: 'Veri (base64)'
+        required: false
+        default: ''
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -15,3 +21,4 @@ jobs:
       - run: npm install --no-audit --no-fund
         working-directory: functions
       - run: NODE_PATH=functions/node_modules node scripts/kongre-ekle.js
+        env: { EP_DATA: '${{ inputs.veri }}' }
