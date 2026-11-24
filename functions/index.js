@@ -105,7 +105,14 @@ exports.yeniKayit = fn.firestore.document('kayit/{uid}').onCreate(async (snap, c
 exports.sohbet = fn.firestore.document('sohbet/{id}').onCreate(async snap => {
   const m = snap.data() || {};
   if (!m.metin) return;
-  await gonder(await onayliler(), '💬 ' + kisa(m.ad || 'Sohbet', 40), kisa(m.metin, 160), 'sohbet', m.u, { sohbet: true });
+  // Etiketlenenlere ve yanıtlanan kişiye, sohbet bildirimini kapatmış olsalar bile ayrı bildirim
+  const ozel = [...new Set([...(Array.isArray(m.etiket) ? m.etiket : []), ...(m.yanit && m.yanit.u ? [m.yanit.u] : [])])].filter(u => u && u !== m.u);
+  for (const u of ozel) {
+    const etik = (m.etiket || []).includes(u);
+    await gonder([u], etik ? `📣 ${kisa(m.ad || 'Biri', 40)} seni etiketledi` : `↩ ${kisa(m.ad || 'Biri', 40)} mesajına yanıt verdi`, kisa(m.metin, 160), 'sohbet', m.u);
+  }
+  const herkes = (await onayliler()).filter(u => !ozel.includes(u));
+  await gonder(herkes, '💬 ' + kisa(m.ad || 'Sohbet', 40), kisa(m.metin, 160), 'sohbet', m.u, { sohbet: true });
 });
 
 // 6) Öneri / sorun bildirimi → yöneticiler; yanıt ya da "yapıldı" → gönderen
