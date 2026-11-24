@@ -1780,6 +1780,7 @@ function vVizit(){let h='';const ok=approved();
   }else{const gr=G[mi];
    h+=`<button class="btn sm ghost" data-act="vzMasa" data-k="" style="margin-bottom:10px">${ic('back')}Tüm masalar</button>
    <section class="card"><div class="card-h"><h2>${gr.masa?'Masa '+esc(gr.masa):'Masa atanmamış'}</h2><span class="pill">${gr.hastalar.length} hasta</span></div><p class="vz-meta">${esc(vzGunAd(day))}</p>
+   <div class="vz-acts" style="margin:0 0 10px"><button class="btn sm" data-act="vzMasaPay" data-id="${esc(sel)}" data-k="${mi}">${ic('share')}WhatsApp'a gönder</button><button class="btn sm ghost" data-act="vzPrint" data-id="${esc(sel)}" data-k="${mi}">${ic('table')}PDF</button></div>
    ${vzKompakt(gr)}</section>`;
    if(G.length>1)h+=`<div class="vz-nav">${mi>0?`<button class="btn sm ghost" data-act="vzMasa" data-id="${esc(sel)}" data-k="${mi-1}">${ic('back')}${G[mi-1].masa?'Masa '+esc(G[mi-1].masa):'Önceki'}</button>`:'<span></span>'}${mi<G.length-1?`<button class="btn sm ghost" data-act="vzMasa" data-id="${esc(sel)}" data-k="${mi+1}">${G[mi+1].masa?'Masa '+esc(G[mi+1].masa):'Sonraki'}${ic('next')}</button>`:''}</div>`;}
  }
@@ -1930,6 +1931,13 @@ A.closeSheet=closeSheet;
 A.mode=el=>{const m=el.dataset.val;try{localStorage.setItem('ap-tema',m);}catch(e){}applyMode(m);render();drawWave();};
 A.modeToggle=()=>{const m=isDark()?'light':'dark';try{localStorage.setItem('ap-tema',m);}catch(e){}applyMode(m);render();drawWave();};
 
+A.vzMasaPay=el=>{const id=el.dataset.id;const day=id.slice(4);const x=vzBirlesik(vzGunler()[day]);const gr=x.gruplar[+el.dataset.k];if(!gr)return;
+ const ms=gr.masa?'Masa '+gr.masa:'Masa atanmamış';const title=`${ms} vizit · ${fmtShort(day)}`;const H=['Hb','Plt','INR','EKG'];
+ const ybu=p=>p.ybu?(p.ybu.d==='oneri'?'YBÜ?':'YBÜ'):'';
+ const rows=gr.hastalar.map((p,i)=>[String(i+1),p.ad,[p.yas,p.cins].filter(Boolean).join(' '),p.durum?p.durum:(p.ameliyat||''),p.asa?'ASA '+p.asa:'?',ybu(p),...H.map(k=>(p.hucre[k]||{}).t||'–')]);
+ const tbl={title,head:['#','Hasta','Yaş','Ameliyat','ASA','YBÜ',...H],rows,mark:gr.hastalar.map(p=>!!(p.ybu&&p.ybu.d==='sart')),note:'Hasta adları ve protokol numaraları gizlenmiştir.'};
+ const text=`*${title}*\n`+gr.hastalar.map((p,i)=>`${i+1}. ${p.ad} (${[p.yas,p.cins].filter(Boolean).join(' ')}) — ${p.durum||p.ameliyat||''} · ${p.asa?'ASA '+p.asa:'ASA ?'}${p.ybu?(p.ybu.d==='oneri'?' · YBÜ?':' · *POSTOP YBÜ*'):''}`).join('\n');
+ shareText(title,text,tbl);};
 A.vzDay=el=>{S.ui.vzGun=el.dataset.val;S.ui.vzMasa=null;render();};
 A.vzMasa=el=>{const k=el.dataset.k;if(k===''||k==null){S.ui.vzMasa=null;}else{S.ui.vzMasa=+k;S.ui.vzMasaOf=el.dataset.id;}render();window.scrollTo({top:0,behavior:'smooth'});};
 A.vzDiscard=()=>{S.vizitGelen=null;render();};
@@ -1937,7 +1945,7 @@ A.vzShare=async()=>{const g=S.vizitGelen;if(!g)return;if(!approved())return toas
  const k=me();const now=Date.now();const doc=Object.assign({},g,{u:S.uid,ad:k&&k.adSoyad||'',ts:now,bitis:now+VZ_SAAT*3600e3});
  if(await W(()=>S.db.collection('vizit').doc().set(doc),'Vizit listesi paylaşıldı')){S.vizitGelen=null;S.ui.vzSel=null;render();}};
 A.vzDel=async el=>{const id=el.dataset.id;if(!(await askConfirm('Bu vizit listesi silinsin mi?','Sil')))return;await W(()=>S.db.doc('vizit/'+id).delete(),'Silindi');};
-A.vzPrint=el=>{const id=el.dataset.id;const x=id&&id.startsWith('gun:')?vzBirlesik(vzGunler()[id.slice(4)]):vzGizliX(S.vizit[id]);if(!x)return;const w=window.open('','_blank');if(!w)return toast('Yazdırma penceresi açılamadı.','err');
+A.vzPrint=el=>{const id=el.dataset.id;let x=id&&id.startsWith('gun:')?vzBirlesik(vzGunler()[id.slice(4)]):vzGizliX(S.vizit[id]);if(x&&el.dataset.k!=null&&el.dataset.k!==''&&x.gruplar[+el.dataset.k])x=Object.assign({},x,{gruplar:[x.gruplar[+el.dataset.k]]});if(!x)return;const w=window.open('','_blank');if(!w)return toast('Yazdırma penceresi açılamadı.','err');
  const css=`body{font:11.5px/1.3 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#111;margin:0}h1{font-size:17px;margin:0 0 5px}
  table{width:100%;border-collapse:collapse;table-layout:auto}th{background:#d9d9d9;border:1px solid #555;padding:3px 4px;text-align:left;white-space:nowrap}td{border:1px solid #555;padding:3px 4px;vertical-align:top}
  td.c{text-align:center}.sub{font-size:10.5px;color:#333}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}tr.gray td{background:#ececec}td.g{background:#e3edf7}
