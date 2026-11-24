@@ -1828,12 +1828,17 @@ function vzGunler(){const o={};vzSorted().forEach(([id,v])=>{const d=vzGun(v);(o
 function vzBirlesik(list){const m=new Map();(list||[]).forEach(([id,v])=>(v.gruplar||[]).forEach(gr=>{const k=String(gr.masa||'').trim()||'–';if(!m.has(k))m.set(k,gr);}));
  const gruplar=[...m.values()].sort((a,b)=>{const x=parseInt(a.masa),y=parseInt(b.masa);return (isNaN(x)?999:x)-(isNaN(y)?999:y)||String(a.masa).localeCompare(String(b.masa),'tr');});
  let n=0,y=0;gruplar.forEach(gr=>gr.hastalar.forEach(p=>{n++;if(p.ybu&&p.ybu.d==='sart')y++;}));return {baslik:'Vizit listesi',gruplar,toplam:n,ybu:y,aciklama:((list||[])[0]||[])[1]?list[0][1].aciklama:''};}
-function vzGun(v){const t=String(v.tarih||'');let m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];m=t.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const d=new Date(v.ts||Date.now());return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+// Vizit bir gün önceden yapılır: liste, paylaşıldığı günden sonraki ilk iş gününe (ameliyat günü) aittir
+const vzIsGunu=d=>{let x=addDays(d,1);for(let i=0;i<10&&isOff(x);i++)x=addDays(x,1);return x;};
+function vzGun(v){if(v.gun&&/^\d{4}-\d{2}-\d{2}$/.test(v.gun))return v.gun;const ud=(()=>{const d=new Date(v.ts||Date.now());return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
+ const t=String(v.tarih||'');let b='';let m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)b=m[0];else{m=t.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);if(m)b=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+ return b&&b>ud?b:vzIsGunu(ud);}
 function vzGunAd(d){const t=todayStr();const w=d===t?'Bugün':d===addDays(t,1)?'Yarın':d===addDays(t,-1)?'Dün':'';return (w?w+' · ':'')+fmtShort(d);}
 function vVizit(){let h='';const ok=approved();
  if(S.vizitGelen){const g=S.vizitGelen;
   h+=`<section class="card vz-gelen"><div class="card-h"><h2>Eklentiden gelen liste</h2><span class="pill">önizleme</span></div>
   <p class="vz-meta">${esc(g.baslik)} · ${g.toplam} hasta${g.ybu?` · <b style="color:var(--crit)">${g.ybu} postop YBÜ</b>`:''}</p>
+  <label class="fld" style="margin:6px 0 4px"><span>Bu liste hangi günün ameliyatları için?</span><input type="date" id="vz-gun" data-keep value="${esc(vzGun({tarih:g.tarih,ts:Date.now()}))}"></label><p class="vz-meta" style="margin-top:0">Vizit bir gün önceden yapıldığı için ertesi iş günü seçili gelir (Cuma paylaşılan liste Pazartesi'ye). Gerekirse değiştir.</p>
   <div class="vz-acts">${ok?`<button class="btn" data-act="vzShare">${ic('send')}Bölümle paylaş</button>`:'<p class="empty">Paylaşmak için onaylı bir hesapla giriş yapmalısın.</p>'}<button class="btn ghost" data-act="vzDiscard">Vazgeç</button></div>
   <p class="vz-meta">Paylaşınca onaylı herkese bildirim gider. Liste ${VZ_SAAT/24} gün sonra otomatik silinir.</p>
   ${vzBody(g)}</section>`;}
@@ -2025,7 +2030,7 @@ A.vzMasa=el=>{const k=el.dataset.k;
 window.addEventListener('popstate',()=>{if(S.ui&&S.ui.vzMasa!=null&&route()==='vizit'){S.ui.vzMasa=null;render();window.scrollTo({top:0});}});
 A.vzDiscard=()=>{S.vizitGelen=null;render();};
 A.vzShare=async()=>{const g=S.vizitGelen;if(!g)return;if(!approved())return toast('Paylaşmak için onaylı hesapla giriş yap.','err');
- const k=me();const now=Date.now();const doc=Object.assign({},g,{u:S.uid,ad:k&&k.adSoyad||'',ts:now,bitis:now+VZ_SAAT*3600e3});
+ const k=me();const now=Date.now();const gi=$('#vz-gun');const gun=gi&&/^\d{4}-\d{2}-\d{2}$/.test(gi.value)?gi.value:vzGun({tarih:g.tarih,ts:now});const doc=Object.assign({},g,{gun,u:S.uid,ad:k&&k.adSoyad||'',ts:now,bitis:now+VZ_SAAT*3600e3});
  if(await W(()=>S.db.collection('vizit').doc().set(doc),'Vizit listesi paylaşıldı')){S.vizitGelen=null;S.ui.vzSel=null;render();}};
 A.vzDel=async el=>{const id=el.dataset.id;if(!(await askConfirm('Bu vizit listesi silinsin mi?','Sil')))return;await W(()=>S.db.doc('vizit/'+id).delete(),'Silindi');};
 A.vzPrint=el=>{const id=el.dataset.id;let x=id&&id.startsWith('gun:')?vzBirlesik(vzGunler()[id.slice(4)]):vzGizliX(S.vizit[id]);if(x&&el.dataset.k!=null&&el.dataset.k!==''&&x.gruplar[+el.dataset.k])x=Object.assign({},x,{gruplar:[x.gruplar[+el.dataset.k]]});if(!x)return;const w=window.open('','_blank');if(!w)return toast('Yazdırma penceresi açılamadı.','err');
