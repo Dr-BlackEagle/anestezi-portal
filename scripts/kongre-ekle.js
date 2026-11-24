@@ -2,7 +2,7 @@
 const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
-const RE = /(^|[\s,;·\/(])MERVE\s+K\.?(?=$|[\s,;·\/)])/gi;
+const RE = /(^|[\s,;·\/(])MERVE(?:\s+K\.?|K)(?=$|[\s,;·\/)])/gi;
 let say = 0;
 const deg = v => {
   if (typeof v === 'string') { return v.replace(RE, (m, a) => { say++; return a + 'MERVEKA'; }); }
