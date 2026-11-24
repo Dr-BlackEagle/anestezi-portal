@@ -1784,7 +1784,7 @@ function vVizit(){let h='';const ok=approved();
    ${vzKompakt(gr)}</section>`;
    if(G.length>1)h+=`<div class="vz-nav">${mi>0?`<button class="btn sm ghost" data-act="vzMasa" data-id="${esc(sel)}" data-k="${mi-1}">${ic('back')}${G[mi-1].masa?'Masa '+esc(G[mi-1].masa):'Önceki'}</button>`:'<span></span>'}${mi<G.length-1?`<button class="btn sm ghost" data-act="vzMasa" data-id="${esc(sel)}" data-k="${mi+1}">${G[mi+1].masa?'Masa '+esc(G[mi+1].masa):'Sonraki'}${ic('next')}</button>`:''}</div>`;}
  }
- return {title:'Vizit Listesi',sub:'Preanestezi vizit listeleri',body:h};}
+ return {title:'Vizit Listesi',sub:'Preanestezi vizit listeleri',body:h,backAct:S.ui.vzMasa!=null&&h.includes('data-act="vzMasa" data-k=""')?'vzMasa':null};}
 const VIEWS={ana:vHome,uzayan:vUzayan,vizit:vVizit,oneri:vOneri,izleme:vIzleme,sohbet:vSohbet,degisim:vDegisim,izin:vIzin,nobet:()=>vMonthly('asistan'),uzman:()=>vMonthly('uzman'),haftalik:vWeekly,islem:vIslem,rotasyon:vRot,seminer:vSem,kongre:vKon,kadro:vKadro,yonetim:vYonetim,duyuru:vDuyuru,profil:vProfil};
 
 /* ---------- çizim ---------- */
@@ -1836,7 +1836,7 @@ function render(){kyRefresh();const r=route();let v;
  if(v.bare)hdr='';
  else if(v.hero){const x=v.hero;hdr=`<div class="top-in hero-in"><span class="brand" aria-hidden="true">${LOGO(46)}</span><div class="top-t"><h1 class="ttl">Asistan Portal</h1><p class="eyebrow">${esc(x.g)}${x.name?', '+esc(x.name):''}</p></div><div class="bar-a">${yetkili()?(()=>{const n=pendingIds().length+(Object.values(S.takas).filter(x=>x.durum==='kabul').length);return `<a class="icon-btn adm-ic" href="#yonetim" aria-label="Yönetici paneli${n?`, ${n} bekleyen`:''}">${ic('shield')}${n?`<span class="adm-b">${n}</span>`:''}</a>`;})():''}<button class="icon-btn" data-act="modeToggle" aria-label="${isDark()?'Açık görünüme geç':'Koyu görünüme geç'}">${ic(isDark()?'sun':'moon')}</button></div></div>`;}
  else if(v.home)hdr=`<div class="top-in"><span class="brand" aria-hidden="true">${LOGO(46)}</span><div class="top-t"><h1 class="ttl">${esc(v.title)}</h1>${v.sub?`<p class="eyebrow">${esc(v.sub)}</p>`:''}</div><div class="bar-a">${v.acts||''}</div></div>`;
- else hdr=`<div class="top-in"><a class="icon-btn" href="#ana" aria-label="Ana sayfaya dön">${ic('back')}</a><div class="top-t"><h1 class="ttl">${esc(v.title)}</h1>${v.sub?`<p class="eyebrow">${esc(v.sub)}</p>`:''}</div>${v.acts?`<div class="bar-a acts-r">${v.acts}</div>`:''}</div>`;
+ else hdr=`<div class="top-in">${v.backAct?`<button class="icon-btn" data-act="${v.backAct}" data-k="" aria-label="Geri">${ic('back')}</button>`:`<a class="icon-btn" href="#ana" aria-label="Ana sayfaya dön">${ic('back')}</a>`}<div class="top-t"><h1 class="ttl">${esc(v.title)}</h1>${v.sub?`<p class="eyebrow">${esc(v.sub)}</p>`:''}</div>${v.acts?`<div class="bar-a acts-r">${v.acts}</div>`:''}</div>`;
  $('#bar').innerHTML=hdr;
  updateTabbar(showTabs,r);
  const main=$('#view');main.classList.toggle('no-tabs',!showTabs);const same=r===S.lastRoute;const keep={},keepD={};let act=null;
@@ -1939,7 +1939,11 @@ A.vzMasaPay=el=>{const id=el.dataset.id;const day=id.slice(4);const x=vzBirlesik
  const text=`*${title}*\n`+gr.hastalar.map((p,i)=>`${i+1}. ${p.ad} (${[p.yas,p.cins].filter(Boolean).join(' ')}) — ${p.durum||p.ameliyat||''} · ${p.asa?'ASA '+p.asa:'ASA ?'}${p.ybu?(p.ybu.d==='oneri'?' · YBÜ?':' · *POSTOP YBÜ*'):''}`).join('\n');
  shareText(title,text,tbl);};
 A.vzDay=el=>{S.ui.vzGun=el.dataset.val;S.ui.vzMasa=null;render();};
-A.vzMasa=el=>{const k=el.dataset.k;if(k===''||k==null){S.ui.vzMasa=null;}else{S.ui.vzMasa=+k;S.ui.vzMasaOf=el.dataset.id;}render();window.scrollTo({top:0,behavior:'smooth'});};
+A.vzMasa=el=>{const k=el.dataset.k;
+ if(k===''||k==null){if(history.state&&history.state.vzm){history.back();return;}S.ui.vzMasa=null;}
+ else{if(S.ui.vzMasa==null)try{history.pushState({vzm:1},'');}catch(e){}S.ui.vzMasa=+k;S.ui.vzMasaOf=el.dataset.id;}
+ render();window.scrollTo({top:0,behavior:'smooth'});};
+window.addEventListener('popstate',()=>{if(S.ui&&S.ui.vzMasa!=null&&route()==='vizit'){S.ui.vzMasa=null;render();window.scrollTo({top:0});}});
 A.vzDiscard=()=>{S.vizitGelen=null;render();};
 A.vzShare=async()=>{const g=S.vizitGelen;if(!g)return;if(!approved())return toast('Paylaşmak için onaylı hesapla giriş yap.','err');
  const k=me();const now=Date.now();const doc=Object.assign({},g,{u:S.uid,ad:k&&k.adSoyad||'',ts:now,bitis:now+VZ_SAAT*3600e3});
