@@ -1201,7 +1201,7 @@ async function tblPng(t){const sc=2,F='Roboto,"Helvetica Neue",Arial,sans-serif'
  return await new Promise(r=>c.toBlob(r,'image/png'));}
 const slug=s=>String(s||'liste').toLocaleLowerCase('tr-TR').replace(/[çğıöşü]/g,c=>({ç:'c',ğ:'g',ı:'i',ö:'o',ş:'s',ü:'u'}[c])).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'liste';
 function shareMenu(title,opts){opts=opts.filter(o=>o.text);if(!opts.length){toast('Paylaşılacak bilgi yok.','err');return;}if(opts.length===1)return shareText(opts[0].label,opts[0].text,opts[0].tbl);S.shareOpts=opts;openSheet(title,opts.map((o,i)=>`<button class="menu-i" data-act="shareOpt" data-i="${i}">${ic('share')}<span><b>${esc(o.label)}</b>${o.sub?`<small>${esc(o.sub)}</small>`:''}</span></button>`).join(''));}
-function shareText(title,text,tbl){S.shareTxt=text;S.shareTbl=tbl||null;if(tbl&&tbl.rows&&tbl.rows.length){openSheet(title,`<div class="share-img" id="sh-img"><p class="hint center">Tablo hazırlanıyor…</p></div><div class="share-acts">${S.dl?`<button class="btn" data-act="tblPng">${ic('dl')}Tabloyu resim olarak kaydet</button><button class="btn ghost" data-act="tblXlsx">${ic('table')}Excel olarak indir</button>`:''}<a class="btn ${S.dl?'ghost':'wa'}" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${ic('wa')}WhatsApp'a metin olarak gönder</a><button class="btn ghost" data-act="copyShare">${ic('copy')}Metni kopyala</button></div><p class="hint">${S.dl?'Resmi kaydedince telefonun paylaşım menüsünden WhatsApp\'a gönderebilirsin.':'Tabloyu kaydetmek için resme basılı tut.'}</p>`);tblPng(tbl).then(b=>{const box=$('#sh-img');if(!box||S.shareTbl!==tbl)return;S.shareBlob=b;if(S.shareUrl)URL.revokeObjectURL(S.shareUrl);S.shareUrl=URL.createObjectURL(b);box.innerHTML=`<img src="${S.shareUrl}" alt="${esc(tbl.title)} tablosu">`;}).catch(e=>{console.warn(e);const box=$('#sh-img');if(box)box.innerHTML='<p class="hint center">Tablo oluşturulamadı.</p>';});return;}
+function shareText(title,text,tbl){S.shareTxt=text;S.shareTbl=tbl||null;if(tbl&&tbl.rows&&tbl.rows.length){openSheet(title,`<div class="share-img" id="sh-img"><p class="hint center">Tablo hazırlanıyor…</p></div><div class="share-acts">${S.dl?`<button class="btn" data-act="tblPng">${ic('dl')}Tabloyu resim olarak kaydet</button><button class="btn ghost" data-act="tblXlsx">${ic('table')}Excel olarak indir</button>`:''}<a class="btn ${S.dl?'ghost':'wa'}" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${ic('wa')}WhatsApp'a metin olarak gönder</a><button class="btn ghost" data-act="copyShare">${ic('copy')}Metni kopyala</button></div><p class="hint">${S.dl?'Resmi kaydedince telefonun paylaşım menüsünden WhatsApp\'a gönderebilirsin.':'Tabloyu kaydetmek için resme basılı tut.'}</p>`);(tbl.png?tbl.png():tblPng(tbl)).then(b=>{const box=$('#sh-img');if(!box||S.shareTbl!==tbl)return;S.shareBlob=b;if(S.shareUrl)URL.revokeObjectURL(S.shareUrl);S.shareUrl=URL.createObjectURL(b);box.innerHTML=`<img src="${S.shareUrl}" alt="${esc(tbl.title)} tablosu">`;}).catch(e=>{console.warn(e);const box=$('#sh-img');if(box)box.innerHTML='<p class="hint center">Tablo oluşturulamadı.</p>';});return;}
  openSheet(title,`<pre class="share-pre">${esc(text)}</pre><div class="share-acts"><a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">${ic('wa')}WhatsApp'ta gönder</a><button class="btn ghost" data-act="copyShare">${ic('copy')}Metni kopyala</button>${PORTAL_URL?`<button class="btn ghost" data-act="copyLink">${ic('link')}Portal bağlantısını kopyala</button>`:''}</div>${PORTAL_URL?'<p class="hint">Portala yalnızca kayıtlı ve onaylı kişiler girebilir.</p>':''}`);}
 async function copyText(txt){try{await navigator.clipboard.writeText(txt);toast('Kopyalandı');}catch(e){const pre=$('.share-pre');if(pre){const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);}toast('Metni seçtim; telefonundaki Kopyala ile alabilirsin.');}}
 
@@ -1735,6 +1735,45 @@ function vzKompakt(gr){let h=vzYbuSum({gruplar:[gr]});
    ${p.form?`<div class="vz-f">Form: ${esc(p.form.tarih)}${p.form.kaynak&&p.form.kaynak!=='bu protokol'?' ('+esc(p.form.kaynak)+')':''} · Prot. ${esc(p.protokol)}</div>`:''}`;
   return `<details class="vz-d${p.ybu&&p.ybu.d==='sart'?' ybu':p.ybu?' oneri':''}${p.durum?' gri':''}" id="vzd-${i}"><summary><span class="vz-no">${i+1}</span><span class="vz-sm"><b>${esc(p.ad)}</b><small>${esc(yas)}</small><span class="vz-op1">${esc(p.ameliyat||'Ameliyat yazılmamış')}</span></span><span class="vz-tg">${tag}${yb}</span></summary><div class="vz-dd">${det}</div></details>`;}).join('')}</div>`;
  return h;}
+// Masanın vizit listesi: yazdırılan A4 tablonun aynısı, resim (PNG) olarak
+async function vzPng(gr,title){const sc=2,F='Roboto,"Segoe UI",Arial,sans-serif',FS=15,LH=20,P=7;const c=document.createElement('canvas'),x=c.getContext('2d');
+ const fnt=b=>`${b?'700 ':''}${FS}px ${F}`;
+ // zengin metin: [{t,b,c}] → genişliğe göre satırlar
+ const wrap=(runs,w)=>{const lines=[[]];let lw=0;runs.forEach(r=>{String(r.t||'').split(/(\n)/).forEach(part=>{if(part==='\n'){lines.push([]);lw=0;return;}
+   part.split(/(\s+)/).forEach(tok=>{if(!tok)return;x.font=fnt(r.b);let tw=x.measureText(tok).width;
+    if(lw+tw>w&&lw>0&&!/^\s+$/.test(tok)){lines.push([]);lw=0;}if(!lines[lines.length-1].length&&/^\s+$/.test(tok))return;
+    while(tw>w&&tok.length>1){let k=tok.length;while(k>1&&x.measureText(tok.slice(0,k)).width>w-lw)k--;lines[lines.length-1].push({t:tok.slice(0,k),b:r.b,c:r.c});lines.push([]);lw=0;tok=tok.slice(k);tw=x.measureText(tok).width;}
+    lines[lines.length-1].push({t:tok,b:r.b,c:r.c});lw+=tw;});});});return lines.filter((l,i)=>l.length||i===0);};
+ const cols=[['#',44],['Hasta / Yaş / Ameliyat',330],['ASA',74],...VZ_HUCRE.map(k=>[k,['Hb','Plt','INR'].includes(k)?66:k==='Sigara'?96:k==='Alerji'?110:150]),['Konsültasyon / Notlar',560]];
+ const W=cols.reduce((a,b)=>a+b[1],0)+40;
+ const NC={eski:'#8a5300',src:'#2b5d8a',soluk:'#666666'};
+ const rows=gr.hastalar.map((p,i)=>{const cells=[];const yb=p.ybu;
+  cells.push([{t:String(i+1),b:1}]);
+  const who=[{t:p.ad,b:1},{t:' '+(p.cins&&p.yas?p.cins+'/'+p.yas:(p.yas||''))},{t:p.yatak?' · '+p.yatak:''},{t:'\n'+(p.ameliyat||'')+(p.kan?' · '+p.kan:''),c:'#333333'}];
+  if(yb)who.push({t:'\n'+(yb.d==='oneri'?'YBÜ ÖNERİSİ?':'POSTOP YBÜ'),b:1,c:yb.d==='oneri'?'#a15c00':'#b3261e'});
+  cells.push(who);
+  if(p.durum){cells.push([{t:'–'}]);VZ_HUCRE.forEach(()=>cells.push([{t:'–'}]));cells.push([{t:p.durum,b:1}]);return {cells,gray:1};}
+  cells.push([{t:p.asa||'?',b:/^(III|IV|V)/.test(p.asa)},...(yb?[{t:'\n'+(yb.d==='oneri'?'YBÜ?':'YBÜ'),b:1,c:yb.d==='oneri'?'#a15c00':'#b3261e'}]:[])]);
+  const gset=[];VZ_HUCRE.forEach(k=>{const h=p.hucre[k]||{t:'–'};cells.push([{t:h.t,b:h.b}]);gset.push(!!h.g);});
+  const notes=[];if(yb)notes.push({t:(yb.d==='oneri'?'YBÜ önerisi':'YBÜ şartı')+(yb.alan?' ('+yb.alan+')':'')+': ',b:1,c:yb.d==='oneri'?'#8a5300':'#8c1d18'},{t:(yb.m||'')+'\n',c:yb.d==='oneri'?'#8a5300':'#8c1d18'});
+  if(p.kom.length)notes.push({t:'['+p.kom.join('] [')+']\n',b:1,c:'#1f4e79'});
+  (p.notlar||[]).forEach(n=>notes.push({t:n.t,b:n.b,c:NC[n.c]}));
+  cells.push(notes.length?notes:[{t:''}]);
+  return {cells,g:[0,0,0,...gset,0],ybu:yb?yb.d:''};});
+ // satır yükseklikleri
+ rows.forEach(r=>{r.lines=r.cells.map((cell,j)=>wrap(cell,cols[j][1]-P*2));r.h=Math.max(...r.lines.map(l=>l.length))*LH+P*2;});
+ const top=96,hh=34,H=top+hh+rows.reduce((a,r)=>a+r.h,0)+44;
+ c.width=W*sc;c.height=H*sc;x.scale(sc,sc);x.fillStyle='#ffffff';x.fillRect(0,0,W,H);x.textBaseline='alphabetic';
+ x.fillStyle='#111';x.font=`700 24px ${F}`;x.fillText(title,20,38);
+ const ny=gr.hastalar.filter(p=>p.ybu&&p.ybu.d==='sart').length;x.font=`15px ${F}`;x.fillStyle='#444';x.fillText(`${gr.hastalar.length} hasta${ny?'':''} · Asistan Portal · hasta adları ve protokol numaraları gizlenmiştir`,20,64);
+ if(ny){x.fillStyle='#b3261e';x.font=`700 15px ${F}`;x.fillText(`${ny} POSTOP YBÜ`,20,86);}
+ let cx=20,y=top;x.fillStyle='#d9d9d9';x.fillRect(20,y,W-40,hh);x.fillStyle='#111';x.font=`700 14px ${F}`;cols.forEach(([n,w])=>{x.fillText(n,cx+P,y+22);cx+=w;});
+ y+=hh;rows.forEach(r=>{cx=20;r.cells.forEach((cell,j)=>{const w=cols[j][1];x.fillStyle=r.gray?'#ececec':r.g[j]?'#e3edf7':r.ybu==='sart'?'#fdf2f1':r.ybu==='oneri'?'#fff8e8':'#ffffff';x.fillRect(cx,y,w,r.h);
+   r.lines[j].forEach((ln,li)=>{let lx=cx+P;ln.forEach(run=>{x.font=fnt(run.b);x.fillStyle=run.c||'#111';x.fillText(run.t,lx,y+P+LH*(li+1)-5);lx+=x.measureText(run.t).width;});});cx+=w;});
+  if(r.ybu){x.fillStyle=r.ybu==='sart'?'#b3261e':'#e0a030';x.fillRect(20,y,5,r.h);}y+=r.h;});
+ x.strokeStyle='#555';x.lineWidth=1;cx=20;x.strokeRect(20.5,top+.5,W-41,y-top);cols.slice(0,-1).forEach(([,w])=>{cx+=w;x.beginPath();x.moveTo(cx+.5,top);x.lineTo(cx+.5,y);x.stroke();});
+ let yy=top+hh;x.beginPath();x.moveTo(20,yy+.5);x.lineTo(W-20,yy+.5);x.stroke();rows.forEach(r=>{yy+=r.h;x.beginPath();x.moveTo(20,yy+.5);x.lineTo(W-20,yy+.5);x.stroke();});
+ return await new Promise(r=>c.toBlob(r,'image/png'));}
 // Yazdırmada: eklentinin A4 yatay tablosunun aynısı
 function vzTablo(x){let h=vzYbuSum(x);
  (x.gruplar||[]).forEach(gr=>{h+=`<section class="grp">${vzMasa(gr,x)}<table><thead><tr><th>#</th><th>Hasta / Yaş / Ameliyat</th><th>ASA</th>${VZ_HUCRE.map(k=>`<th>${k}</th>`).join('')}<th>Konsültasyon / Notlar</th></tr></thead><tbody>`+
@@ -1935,8 +1974,10 @@ A.vzMasaPay=el=>{const id=el.dataset.id;const day=id.slice(4);const x=vzBirlesik
  const ms=gr.masa?'Masa '+gr.masa:'Masa atanmamış';const title=`${ms} vizit · ${fmtShort(day)}`;const H=['Hb','Plt','INR','EKG'];
  const ybu=p=>p.ybu?(p.ybu.d==='oneri'?'YBÜ?':'YBÜ'):'';
  const rows=gr.hastalar.map((p,i)=>[String(i+1),p.ad,[p.yas,p.cins].filter(Boolean).join(' '),p.durum?p.durum:(p.ameliyat||''),p.asa?'ASA '+p.asa:'?',ybu(p),...H.map(k=>(p.hucre[k]||{}).t||'–')]);
- const tbl={title,head:['#','Hasta','Yaş','Ameliyat','ASA','YBÜ',...H],rows,mark:gr.hastalar.map(p=>!!(p.ybu&&p.ybu.d==='sart')),note:'Hasta adları ve protokol numaraları gizlenmiştir.'};
- const text=`*${title}*\n`+gr.hastalar.map((p,i)=>`${i+1}. ${p.ad} (${[p.yas,p.cins].filter(Boolean).join(' ')}) — ${p.durum||p.ameliyat||''} · ${p.asa?'ASA '+p.asa:'ASA ?'}${p.ybu?(p.ybu.d==='oneri'?' · YBÜ?':' · *POSTOP YBÜ*'):''}`).join('\n');
+ const tbl={title,head:['#','Hasta','Yaş','Ameliyat','ASA','YBÜ',...H],rows,mark:gr.hastalar.map(p=>!!(p.ybu&&p.ybu.d==='sart')),note:'Hasta adları ve protokol numaraları gizlenmiştir.',png:()=>vzPng(gr,title)};
+ const text=`*${title}*\n_Hasta adları gizlenmiştir_\n\n`+gr.hastalar.map((p,i)=>{let t=`*${i+1}. ${p.ad}* (${[p.cins,p.yas].filter(Boolean).join('/')}${p.yatak?' · '+p.yatak:''})\n${p.ameliyat||''}${p.kan?' · Kan: '+p.kan:''}`;if(p.durum)return t+`\n*${p.durum}*`;
+  t+=`\n${p.asa?'ASA '+p.asa:'ASA ?'}${p.ybu?(p.ybu.d==='oneri'?' · YBÜ önerisi':' · *POSTOP YBÜ*'):''}`;if(p.ybu&&p.ybu.m)t+=`\nYBÜ: ${p.ybu.m}`;
+  t+=`\n`+VZ_HUCRE.map(k=>`${k}: ${(p.hucre[k]||{}).t||'–'}`).join(' · ');if(p.kom.length)t+=`\nKons: ${p.kom.join(', ')}`;const nt=(p.notlar||[]).map(n=>n.t).join(' ').replace(/\s+/g,' ').trim();if(nt)t+=`\n${nt}`;return t;}).join('\n\n');
  shareText(title,text,tbl);};
 A.vzDay=el=>{S.ui.vzGun=el.dataset.val;S.ui.vzMasa=null;render();};
 A.vzMasa=el=>{const k=el.dataset.k;
@@ -1974,7 +2015,7 @@ A.rotShift=el=>{S.ui.rAy=shiftMonth(el.dataset.k,+el.dataset.n);render();};
 A.iBar=el=>{S.ui.iBar=el.dataset.d;render();};
 A.rotOpen=el=>{S.ui.rKisi=+el.dataset.i;S.ui.rTab='karne';render();window.scrollTo(0,0);};
 A.shareOpt=el=>{const o=S.shareOpts[+el.dataset.i];if(o)shareText(o.label,o.text,o.tbl);};
-A.tblPng=async()=>{const t=S.shareTbl;if(!t||!S.dl)return;try{const b=S.shareBlob||await tblPng(t);await S.dl.save({filename:slug(t.title)+'.png',data:b});toast('Tablo kaydedildi');}catch(e){const c=e&&e.code;if(c==='declined')return;toast(c==='rate_limited'?'Bir kaydetme penceresi zaten açık.':'Kaydedilemedi.','err');}};
+A.tblPng=async()=>{const t=S.shareTbl;if(!t||!S.dl)return;try{const b=S.shareBlob||await (t.png?t.png():tblPng(t));await S.dl.save({filename:slug(t.title)+'.png',data:b});toast('Tablo kaydedildi');}catch(e){const c=e&&e.code;if(c==='declined')return;toast(c==='rate_limited'?'Bir kaydetme penceresi zaten açık.':'Kaydedilemedi.','err');}};
 A.tblXlsx=async()=>{const t=S.shareTbl;if(!t||!S.dl)return;const rows=t.rows.map((r,i)=>t.sec&&t.sec.includes(i)?[String(r[0]).toLocaleUpperCase('tr-TR')]:r);try{await S.dl.save({filename:slug(t.title)+'.xlsx',data:xlsxBuild('Liste',t.head,rows,t.head.map((h,j)=>j===0?18:Math.min(40,Math.max(12,...t.rows.map(r=>String(r[j]||'').length+2)))))});toast('Excel dosyası kaydedildi');}catch(e){const c=e&&e.code;if(c==='declined')return;toast('Kaydedilemedi.','err');}};
 A.copyShare=()=>copyText(S.shareTxt);
 A.copyLink=()=>copyText(PORTAL_URL);
