@@ -1742,7 +1742,7 @@ function vVizit(){let h='';const ok=approved();
   if(mi==null){
    h+=`<section class="card"><div class="card-h"><h2>${esc(vzGunAd(day))} vizit listesi</h2><span class="pill">${x.toplam||0} hasta</span></div>
    <p class="vz-meta">${esc(x.ad?nameStd(x.ad):nameOf(x.u))} paylaştı · ${esc(agoTxt(x.ts||0))}${x.ybu?` · <b style="color:var(--crit)">${x.ybu} postop YBÜ</b>`:''}</p>
-   ${vzYbuSum(x)}<div class="vz-masalar">${G.map((gr,k)=>{const ny=gr.hastalar.filter(p=>p.ybu&&p.ybu.d==='sart').length;const no=gr.hastalar.filter(p=>p.ybu&&p.ybu.d==='oneri').length;
+   <div class="vz-masalar">${G.map((gr,k)=>{const ny=gr.hastalar.filter(p=>p.ybu&&p.ybu.d==='sart').length;const no=gr.hastalar.filter(p=>p.ybu&&p.ybu.d==='oneri').length;
     return `<button class="vz-mk${ny?' ybu':''}" data-act="vzMasa" data-id="${esc(sel)}" data-k="${k}"><span class="vz-mn">${gr.masa?esc(gr.masa):'–'}</span><b>${gr.masa?'Masa '+esc(gr.masa):'Masa atanmamış'}</b><small>${gr.hastalar.length} hasta</small>${ny?`<span class="vz-y">${ny} YBÜ</span>`:no?`<span class="vz-y o">${no} YBÜ?</span>`:''}</button>`;}).join('')}</div>
    <div class="vz-acts" style="margin:12px 0 0"><button class="btn sm ghost" data-act="vzPrint" data-id="${esc(sel)}">${ic('table')}Yazdır / PDF</button>${sil?`<button class="btn sm ghost" data-act="vzDel" data-id="${esc(sel)}">Sil</button>`:''}</div></section>`;
   }else{const gr=G[mi];
