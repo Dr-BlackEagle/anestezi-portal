@@ -877,6 +877,16 @@ a.uz-home.card:has(.ti){display:flex;align-items:center;gap:12px}
 .sheet-body .seg{margin-bottom:2px}
 
 /* ---------- Vizit listesi (Preanestezi Özet eklentisinden) ---------- */
+.vz-kl{display:flex;flex-direction:column;gap:8px}
+.vz-d{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.vz-d.ybu{border-color:var(--crit);box-shadow:inset 4px 0 0 var(--crit)}.vz-d.oneri{border-color:#E0A100;box-shadow:inset 4px 0 0 #E0A100}.vz-d.gri{opacity:.65}
+.vz-d summary{list-style:none;display:flex;align-items:flex-start;gap:10px;padding:11px 12px;cursor:pointer}.vz-d summary::-webkit-details-marker{display:none}
+.vz-d .vz-no{flex-shrink:0;width:24px;color:var(--muted);font-weight:700;padding-top:1px}
+.vz-sm{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;column-gap:8px}.vz-sm b{font-size:15px}.vz-sm small{color:var(--muted);font-size:12.5px}
+.vz-op1{flex-basis:100%;font-size:13.5px;color:var(--ink-2);margin-top:2px}
+.vz-tg{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.vz-yb{font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--crit);color:#fff}.vz-yb.o{background:#E0A100}
+.vz-dd{padding:2px 12px 12px 46px;border-top:1px dashed var(--line)}.vz-d[open] summary{background:var(--ind)}
 .vz-masalar{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px}
 .vz-mk{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 12px 12px 64px;min-height:64px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;font:inherit;cursor:pointer}
 .vz-mk:active{transform:scale(.98)}.vz-mk b{font-size:14.5px}.vz-mk small{color:var(--muted);font-size:12.5px}
@@ -1710,6 +1720,17 @@ function vzBody(x){let h=vzYbuSum(x);
    ${p.form?`<div class="vz-f">Form: ${esc(p.form.tarih)}${p.form.kaynak&&p.form.kaynak!=='bu protokol'?' ('+esc(p.form.kaynak)+')':''} · Prot. ${esc(p.protokol)}</div>`:''}</li>`;}).join('')}</ol>`;});
  if(x.aciklama)h+=`<p class="vz-meta" style="margin-top:10px">${esc(x.aciklama)}</p>`;
  return h;}
+// Masa içinde: kısa satır (ad, yaş, ameliyat, ASA); dokununca ayrıntı açılır
+function vzKompakt(gr){let h=vzYbuSum({gruplar:[gr]});
+ h+=`<div class="vz-kl">${gr.hastalar.map((p,i)=>{const hi=/^(III|IV|V)/.test(p.asa)||(p.ybu&&p.ybu.d==='sart');const yas=[p.yas?p.yas+' y':'',p.cins].filter(Boolean).join(' · ');
+  const tag=p.durum?`<span class="vz-asa">${esc(p.durum.slice(0,24))}</span>`:`<span class="vz-asa${hi?' hi':''}">${esc(p.asa?'ASA '+p.asa:'ASA ?')}</span>`;
+  const yb=p.ybu?`<span class="vz-yb${p.ybu.d==='oneri'?' o':''}">${p.ybu.d==='oneri'?'YBÜ?':'YBÜ'}</span>`:'';
+  const det=p.durum?`<div class="vz-not"><b>${esc(p.durum)}</b></div>`:`${vzYbuTxt(p)}<dl class="vz-grid">${VZ_HUCRE.map(k=>{const c=p.hucre[k]||{t:'–'};return `<div class="${c.g?'g':''}"><dt>${k}</dt><dd>${c.b?`<b>${esc(c.t)}</b>`:esc(c.t)}</dd></div>`;}).join('')}</dl>
+   ${p.kan?`<div class="vz-f">Kan: ${esc(p.kan)}</div>`:''}${p.yatak?`<div class="vz-f">Yatak: ${esc(p.yatak)}</div>`:''}
+   ${p.kom.length?`<div class="vz-chips">${p.kom.map(k=>`<span class="vz-c k">${esc(k)}</span>`).join('')}</div>`:''}${p.notlar.length?`<div class="vz-not">${vzNot(p)}</div>`:''}
+   ${p.form?`<div class="vz-f">Form: ${esc(p.form.tarih)}${p.form.kaynak&&p.form.kaynak!=='bu protokol'?' ('+esc(p.form.kaynak)+')':''} · Prot. ${esc(p.protokol)}</div>`:''}`;
+  return `<details class="vz-d${p.ybu&&p.ybu.d==='sart'?' ybu':p.ybu?' oneri':''}${p.durum?' gri':''}" id="vzd-${i}"><summary><span class="vz-no">${i+1}</span><span class="vz-sm"><b>${esc(p.ad)}</b><small>${esc(yas)}</small><span class="vz-op1">${esc(p.ameliyat||'Ameliyat yazılmamış')}</span></span><span class="vz-tg">${tag}${yb}</span></summary><div class="vz-dd">${det}</div></details>`;}).join('')}</div>`;
+ return h;}
 // Yazdırmada: eklentinin A4 yatay tablosunun aynısı
 function vzTablo(x){let h=vzYbuSum(x);
  (x.gruplar||[]).forEach(gr=>{h+=`<section class="grp">${vzMasa(gr,x)}<table><thead><tr><th>#</th><th>Hasta / Yaş / Ameliyat</th><th>ASA</th>${VZ_HUCRE.map(k=>`<th>${k}</th>`).join('')}<th>Konsültasyon / Notlar</th></tr></thead><tbody>`+
@@ -1748,7 +1769,7 @@ function vVizit(){let h='';const ok=approved();
   }else{const gr=G[mi];
    h+=`<button class="btn sm ghost" data-act="vzMasa" data-k="" style="margin-bottom:10px">${ic('back')}Tüm masalar</button>
    <section class="card"><div class="card-h"><h2>${gr.masa?'Masa '+esc(gr.masa):'Masa atanmamış'}</h2><span class="pill">${gr.hastalar.length} hasta</span></div><p class="vz-meta">${esc(vzGunAd(day))}</p>
-   ${vzBody({gruplar:[Object.assign({},gr,{masa:''})]})}</section>`;
+   ${vzKompakt(gr)}</section>`;
    if(G.length>1)h+=`<div class="vz-nav">${mi>0?`<button class="btn sm ghost" data-act="vzMasa" data-id="${esc(sel)}" data-k="${mi-1}">${ic('back')}${G[mi-1].masa?'Masa '+esc(G[mi-1].masa):'Önceki'}</button>`:'<span></span>'}${mi<G.length-1?`<button class="btn sm ghost" data-act="vzMasa" data-id="${esc(sel)}" data-k="${mi+1}">${G[mi+1].masa?'Masa '+esc(G[mi+1].masa):'Sonraki'}${ic('next')}</button>`:''}</div>`;}
  }
  return {title:'Vizit Listesi',sub:'Preanestezi vizit listeleri',body:h};}
