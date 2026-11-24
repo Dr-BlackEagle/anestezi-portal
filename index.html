@@ -887,6 +887,7 @@ a.uz-home.card:has(.ti){display:flex;align-items:center;gap:12px}
 .vz-tg{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
 .vz-yb{font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px;background:var(--crit);color:#fff}.vz-yb.o{background:#E0A100}
 .vz-dd{padding:2px 12px 12px 46px;border-top:1px dashed var(--line)}.vz-d[open] summary{background:var(--ind)}
+.vz-yk summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none}.vz-yk summary::-webkit-details-marker{display:none}.vz-yk[open] summary{margin-bottom:8px}
 .vz-masalar{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px}
 .vz-mk{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 12px 12px 64px;min-height:64px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;font:inherit;cursor:pointer}
 .vz-mk:active{transform:scale(.98)}.vz-mk b{font-size:14.5px}.vz-mk small{color:var(--muted);font-size:12.5px}
@@ -1745,6 +1746,11 @@ function vzTablo(x){let h=vzYbuSum(x);
    <td>${vzYbuTxt(p)}${p.kom.length?`<div>${p.kom.map(k=>`<span class="kc">${esc(k)}</span>`).join(' ')}</div>`:''}${vzNot(p)}</td></tr>`;}).join('')+`</tbody></table></section>`;});
  if(x.aciklama)h+=`<p class="leg">${esc(x.aciklama)}</p>`;
  return h;}
+// Aynı güne ait bütün paylaşımlar birleştirilir: her masa için en son paylaşılan hali
+function vzGunler(){const o={};vzSorted().forEach(([id,v])=>{const d=vzGun(v);(o[d]=o[d]||[]).push([id,v]);});return o;}
+function vzBirlesik(list){const m=new Map();(list||[]).forEach(([id,v])=>(v.gruplar||[]).forEach(gr=>{const k=String(gr.masa||'').trim()||'–';if(!m.has(k))m.set(k,gr);}));
+ const gruplar=[...m.values()].sort((a,b)=>{const x=parseInt(a.masa),y=parseInt(b.masa);return (isNaN(x)?999:x)-(isNaN(y)?999:y)||String(a.masa).localeCompare(String(b.masa),'tr');});
+ let n=0,y=0;gruplar.forEach(gr=>gr.hastalar.forEach(p=>{n++;if(p.ybu&&p.ybu.d==='sart')y++;}));return {baslik:'Vizit listesi',gruplar,toplam:n,ybu:y,aciklama:((list||[])[0]||[])[1]?list[0][1].aciklama:''};}
 function vzGun(v){const t=String(v.tarih||'');let m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return m[0];m=t.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const d=new Date(v.ts||Date.now());return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function vzGunAd(d){const t=todayStr();const w=d===t?'Bugün':d===addDays(t,1)?'Yarın':d===addDays(t,-1)?'Dün':'';return (w?w+' · ':'')+fmtShort(d);}
 function vVizit(){let h='';const ok=approved();
@@ -1757,18 +1763,20 @@ function vVizit(){let h='';const ok=approved();
  const L=vzSorted();
  if(!L.length&&!S.vizitGelen)h+=`<section class="card"><p class="empty">Paylaşılmış güncel vizit listesi yok.</p><p class="vz-meta">Liste, Preanestezi Özet eklentisindeki "Portala gönder" düğmesiyle buraya gelir.</p></section>`;
  if(L.length){// her gün için en son paylaşılan liste
-  const byDay={};L.forEach(([id,v])=>{const d=vzGun(v);if(!byDay[d])byDay[d]=[id,v];});
+  const byDay=vzGunler();
   const days=Object.keys(byDay).sort();const t=todayStr();
   const defDay=days.find(d=>d>t)||days.find(d=>d===t)||days[days.length-1];
-  const day=S.ui.vzGun&&byDay[S.ui.vzGun]?S.ui.vzGun:defDay;const [sel,x]=byDay[day];
+  const day=S.ui.vzGun&&byDay[S.ui.vzGun]?S.ui.vzGun:defDay;const x=vzBirlesik(byDay[day]);const sel='gun:'+day;
   if(days.length>1)h+=`<div class="seg" role="tablist">${days.map(d=>`<button role="tab" aria-selected="${d===day}" data-act="vzDay" data-val="${esc(d)}">${esc(vzGunAd(d))}</button>`).join('')}</div>`;
-  const sil=x.u===S.uid||yetkili();const G=(x.gruplar||[]);const mi=S.ui.vzMasa!=null&&G[S.ui.vzMasa]&&S.ui.vzMasaOf===sel?S.ui.vzMasa:null;
+  const G=(x.gruplar||[]);const mi=S.ui.vzMasa!=null&&G[S.ui.vzMasa]&&S.ui.vzMasaOf===sel?S.ui.vzMasa:null;
   if(mi==null){
    h+=`<section class="card"><div class="card-h"><h2>${esc(vzGunAd(day))} vizit listesi</h2><span class="pill">${x.toplam||0} hasta</span></div>
-   <p class="vz-meta">${esc(x.ad?nameStd(x.ad):nameOf(x.u))} paylaştı · ${esc(agoTxt(x.ts||0))}${x.ybu?` · <b style="color:var(--crit)">${x.ybu} postop YBÜ</b>`:''}</p>
+   ${x.ybu?`<p class="vz-meta"><b style="color:var(--crit)">${x.ybu} postop YBÜ</b></p>`:''}
    <div class="vz-masalar">${G.map((gr,k)=>{const ny=gr.hastalar.filter(p=>p.ybu&&p.ybu.d==='sart').length;const no=gr.hastalar.filter(p=>p.ybu&&p.ybu.d==='oneri').length;
     return `<button class="vz-mk${ny?' ybu':''}" data-act="vzMasa" data-id="${esc(sel)}" data-k="${k}"><span class="vz-mn">${gr.masa?esc(gr.masa):'–'}</span><b>${gr.masa?'Masa '+esc(gr.masa):'Masa atanmamış'}</b><small>${gr.hastalar.length} hasta</small>${ny?`<span class="vz-y">${ny} YBÜ</span>`:no?`<span class="vz-y o">${no} YBÜ?</span>`:''}</button>`;}).join('')}</div>
-   <div class="vz-acts" style="margin:12px 0 0"><button class="btn sm ghost" data-act="vzPrint" data-id="${esc(sel)}">${ic('table')}Yazdır / PDF</button>${sil?`<button class="btn sm ghost" data-act="vzDel" data-id="${esc(sel)}">Sil</button>`:''}</div></section>`;
+   <div class="vz-acts" style="margin:12px 0 0"><button class="btn sm ghost" data-act="vzPrint" data-id="${esc(sel)}">${ic('table')}Yazdır / PDF</button></div></section>`;
+   h+=`<section class="card"><details class="vz-yk"><summary><b>Bu günün paylaşımları</b><span class="pill">${byDay[day].length}</span></summary><ul class="alist">${byDay[day].map(([id,v])=>{const sil=v.u===S.uid||yetkili();const ms=(v.gruplar||[]).map(g=>g.masa||'–').join(', ');
+    return `<li class="arow"><div class="arow-t"><b>${esc(v.ad?nameStd(v.ad):nameOf(v.u))}</b><small>${esc(agoTxt(v.ts||0))} · Masa ${esc(ms)} · ${v.toplam||0} hasta</small></div>${sil?`<div class="arow-a"><button class="btn sm ghost" data-act="vzDel" data-id="${esc(id)}">Sil</button></div>`:''}</li>`;}).join('')}</ul><p class="hint">Aynı masa birden fazla kez paylaşıldıysa en son paylaşılan gösterilir.</p></details></section>`;
   }else{const gr=G[mi];
    h+=`<button class="btn sm ghost" data-act="vzMasa" data-k="" style="margin-bottom:10px">${ic('back')}Tüm masalar</button>
    <section class="card"><div class="card-h"><h2>${gr.masa?'Masa '+esc(gr.masa):'Masa atanmamış'}</h2><span class="pill">${gr.hastalar.length} hasta</span></div><p class="vz-meta">${esc(vzGunAd(day))}</p>
@@ -1929,7 +1937,7 @@ A.vzShare=async()=>{const g=S.vizitGelen;if(!g)return;if(!approved())return toas
  const k=me();const now=Date.now();const doc=Object.assign({},g,{u:S.uid,ad:k&&k.adSoyad||'',ts:now,bitis:now+VZ_SAAT*3600e3});
  if(await W(()=>S.db.collection('vizit').doc().set(doc),'Vizit listesi paylaşıldı')){S.vizitGelen=null;S.ui.vzSel=null;render();}};
 A.vzDel=async el=>{const id=el.dataset.id;if(!(await askConfirm('Bu vizit listesi silinsin mi?','Sil')))return;await W(()=>S.db.doc('vizit/'+id).delete(),'Silindi');};
-A.vzPrint=el=>{const x=vzGizliX(S.vizit[el.dataset.id]);if(!x)return;const w=window.open('','_blank');if(!w)return toast('Yazdırma penceresi açılamadı.','err');
+A.vzPrint=el=>{const id=el.dataset.id;const x=id&&id.startsWith('gun:')?vzBirlesik(vzGunler()[id.slice(4)]):vzGizliX(S.vizit[id]);if(!x)return;const w=window.open('','_blank');if(!w)return toast('Yazdırma penceresi açılamadı.','err');
  const css=`body{font:11.5px/1.3 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#111;margin:0}h1{font-size:17px;margin:0 0 5px}
  table{width:100%;border-collapse:collapse;table-layout:auto}th{background:#d9d9d9;border:1px solid #555;padding:3px 4px;text-align:left;white-space:nowrap}td{border:1px solid #555;padding:3px 4px;vertical-align:top}
  td.c{text-align:center}.sub{font-size:10.5px;color:#333}thead{display:table-header-group}tr{break-inside:avoid;page-break-inside:avoid}tr.gray td{background:#ececec}td.g{background:#e3edf7}
