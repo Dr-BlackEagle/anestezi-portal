@@ -1330,7 +1330,7 @@ function vHome(){const k=me();const gp=greetParts();let h='';
  const GRUPLAR=[['Günlük',['uzayan','vizit','degisim','uzman']],['Eğitim',['icerik','rotasyon','seminer','kongre']],['Bölüm',['izin','kadro']]];
  const navGo=new Set(TABS.map(t=>t[0]));const uzKart=false;
  const tl=go=>TILES.find(t=>t.go===go);
- const kucuk=t=>{const s=tileSub(t.go);const led=t.go==='uzayan'&&uzToday().some(x=>x.durum!=='bitti');return `<a class="mt${led?' led':''}" href="#${t.go}">${led?'<span class="mt-led" aria-label="Devam eden uzayan masa var"></span>':''}<span class="ti ${t.c}">${ic(t.i)}</span><b>${t.t}</b>${s[1]?`<small>${esc(s[0])}</small>`:''}</a>`;};
+ const kucuk=t=>{const s=tileSub(t.go);const led=t.go==='uzayan'?uzToday().some(x=>x.durum!=='bitti'):yeniVar(t.go);return `<a class="mt${led?' led':''}" href="#${t.go}">${led?`<span class="mt-led" aria-label="${t.go==='uzayan'?'Devam eden uzayan masa var':'Yeni içerik var'}"></span>`:''}<span class="ti ${t.c}">${ic(t.i)}</span><b>${t.t}</b>${s[1]?`<small>${esc(s[0])}</small>`:''}</a>`;};
  const sira=GRUPLAR.flatMap(g=>g[1]).map(tl).concat(TILES.filter(t=>!GRUPLAR.some(g=>g[1].includes(t.go)))).filter(t=>t&&!navGo.has(t.go)&&!(t.go==='uzayan'&&uzKart));
  if(sira.length)h+=`<nav class="mtiles" aria-label="Bölümler" style="margin-top:4px">${sira.map(kucuk).join('')}</nav>`;
  if(yetkili()){const s=tileSub('yonetim');h+=`<nav class="tiles" style="margin-top:6px"><a class="tile wide adm" href="#yonetim"><span class="ti t-slate">${ic('shield')}</span><span><b>Yönetici Paneli</b><small class="${s[1]?'hot':''}">${esc(s[0]||'')}</small></span></a></nav>`;}
@@ -1671,6 +1671,16 @@ function vIcerik(){const q=trLow(S.ui.icQ||'');const kat=S.ui.icKat||'';const L=
  const grp=kat||q?[['',F]]:IC_KAT.map(k=>[k,F.filter(x=>(x.kat||'Diğer')===k)]).filter(g=>g[1].length);
  grp.forEach(([k,M])=>{h+=`<section class="card">${k?`<div class="card-h"><h2>${esc(k)}</h2><span class="pill">${M.length}</span></div>`:''}<ul class="alist ic-l">${M.map(x=>`<li><button class="ic-i" data-act="icOpen" data-id="${esc(x.id)}"><span class="ti t-teal">${ic(x.link&&!x.metin?'link':'book')}</span><span class="arow-t"><b>${x.sabit?'📌 ':''}${esc(x.baslik||'')}</b><small>${esc(x.metin?String(x.metin).replace(/\*\*|^\s*#+\s*|^\s*[-•*]\s+/gm,'').replace(/\s+/g,' ').trim().slice(0,80):(x.link?'Bağlantı':''))}</small></span><span class="izl-go">${ic('next')}</span></button></li>`).join('')}</ul></section>`;});
  return {title:'Faydalı İçerikler',sub:'Protokoller, algoritmalar, bağlantılar',body:h};}
+/* ---------- yeni içerik ışığı ---------- */
+// Bir bölümde başkasının eklediği/güncellediği bir şey varsa kutucukta ışık yanar; bölüm açılınca söner (cihaz başına).
+const YENI_SRC={vizit:()=>Object.values(S.vizit||{}).filter(vzAktif),degisim:()=>Object.values(S.takas||{}),uzman:()=>Object.values(S.nobet||{}),icerik:()=>Object.values(S.icerik||{}),
+ rotasyon:()=>Object.values(S.rotasyon||{}),seminer:()=>Object.values(S.seminer||{}),kongre:()=>Object.values(S.kongre||{}),izin:()=>Object.values(S.izin||{}).concat(Object.values(S.izdonem||{})),kadro:()=>[S.kadro||{}]};
+const tnum=v=>typeof v==='number'?v:(v?(Date.parse(v)||0):0);
+function yeniTs(go){const f=YENI_SRC[go];if(!f)return 0;let m=0;f().forEach(x=>{if(!x)return;const by=x.guncelleyen||x.by||x.u;if(by&&by===S.uid)return;const t=Math.max(tnum(x.ts),tnum(x.guncel),tnum(x.guncelleme),tnum(x.olus));if(t>m)m=t;});return m;}
+function seenGet(){try{return JSON.parse(localStorage.getItem('ap-seen-'+(S.uid||''))||'{}');}catch(e){return {};}}
+function seenSet(o){try{localStorage.setItem('ap-seen-'+(S.uid||''),JSON.stringify(o));}catch(e){}}
+function yeniVar(go){if(!S.uid)return false;const o=seenGet();const t=yeniTs(go);if(o[go]==null){o[go]=Math.max(t,Date.now());seenSet(o);return false;}return t>o[go];}
+function yeniGordu(go){if(!S.uid||!YENI_SRC[go])return;const o=seenGet();o[go]=Math.max(Date.now(),yeniTs(go));seenSet(o);}
 /* ---------- uzayan masalar ---------- */
 // Hafta içi devir öncesi (15:30–16:00) ameliyathanede uzayan masalar: masadaki kişi girer, nöbetçiler devralır ya da devam etmesini ister.
 const UZ_SURE=[[30,'30 dk'],[60,'1 sa'],[90,'1,5 sa'],[120,'2 sa'],[180,'3 sa +'],[0,'Bilinmiyor']];
@@ -1892,7 +1902,7 @@ function updateTabbar(show,r){const tb=$('#tabbar');
  fab.classList.remove('off');fab.style.setProperty('--i',idx);
  if(fab.dataset.i!==String(idx)){bub.innerHTML=ic(items[idx].icon);fab.dataset.i=String(idx);bub.classList.remove('pop');void bub.offsetWidth;bub.classList.add('pop');}
  if(fresh)requestAnimationFrame(()=>requestAnimationFrame(()=>fab.classList.remove('init')));}
-function render(){kyRefresh();const r=route();let v;
+function render(){kyRefresh();const r=route();if(YENI_SRC[r]&&S.state==="ready")yeniGordu(r);let v;
  if(S.state==='nodb')v=vNoDb();
  else if(S.state==='anon')v=vEntry();
  else if(S.state==='loading'||!dataReady())v=vLoading();
