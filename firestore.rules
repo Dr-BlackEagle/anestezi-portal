@@ -141,8 +141,8 @@ service cloud.firestore {
 
     // Listeler, duyurular, programlar, ayarlar: onaylılar okur, yetkililer yazar
     match /{col}/{id} {
-      allow read: if onayli() && col in ['duyurular','nobet','haftalik','rotasyon','seminer','kongre','ayar','kadro','izdonem'];
-      allow write: if yetkili() && col in ['duyurular','nobet','haftalik','rotasyon','seminer','kongre','ayar','kadro','izdonem'];
+      allow read: if onayli() && col in ['duyurular','nobet','haftalik','rotasyon','seminer','kongre','ayar','kadro','izdonem','icerik'];
+      allow write: if yetkili() && col in ['duyurular','nobet','haftalik','rotasyon','seminer','kongre','ayar','kadro','izdonem','icerik'];
     }
   }
 }
