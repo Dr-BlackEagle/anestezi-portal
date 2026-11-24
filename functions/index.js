@@ -179,12 +179,13 @@ async function bugunNobetciler() {
   if (!doc.exists) return [];
   const d = doc.data() || {}, row = (d.gunler || {})[ds];
   if (!row) return [];
-  const cols = (d.sutunlar || []).map((c, i) => Object.assign({}, c, { i })).filter(c => c.tip !== 'uzman');
+  // Yalnızca ameliyathane nöbetçileri (asistan ve uzman)
+  const cols = (d.sutunlar || []).map((c, i) => Object.assign({}, c, { i })).filter(c => /AMEL/i.test((c.grup || '') + ' ' + (c.ad || '')));
   const onay = new Set((await db.collection('onay').get()).docs.map(x => x.id));
   const o = await sahipUid(); if (o) onay.add(o);
   return (await db.collection('kayit').get()).docs
-    .filter(x => onay.has(x.id) && x.data().kisaAd && x.data().unvan !== 'uzman')
-    .filter(x => cols.some(c => hasTok(row[c.i], UP(x.data().kisaAd))))
+    .filter(x => onay.has(x.id) && x.data().kisaAd)
+    .filter(x => cols.some(c => (c.tip === 'uzman') === (x.data().unvan === 'uzman') && hasTok(row[c.i], UP(x.data().kisaAd))))
     .map(x => x.id);
 }
 const masaTxt = x => `${x.blok && x.blok !== 'Diğer' ? x.blok + ' ' : ''}${x.masa}`;
