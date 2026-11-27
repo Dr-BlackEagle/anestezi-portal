@@ -1037,6 +1037,11 @@ main{padding-bottom:calc(120px + env(safe-area-inset-bottom))!important}
 .dbx{width:48px;height:52px;border-radius:14px;background:#23253A;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}.dbx b{font-size:18px;line-height:1;color:#fff!important}.dbx small{font-size:10.5px;opacity:.75;font-weight:700;text-transform:uppercase}
 .duties .duty-a{width:100%;display:flex;gap:8px}
 :root[data-mode="dark"] .duties li{background:rgba(255,255,255,.06)}
+.msg-r{display:flex;flex-wrap:wrap;gap:4px;margin:-4px 6px 2px;position:relative;z-index:1}.msg.mine .msg-r{justify-content:flex-end}
+.msg-rc{display:inline-flex;align-items:center;gap:3px;min-height:26px;padding:1px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:14px;line-height:1;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.msg-rc span{font-size:12px;font-weight:700;color:var(--muted)}.msg-rc.on{border-color:var(--plum);background:rgba(151,63,138,.12)}
+.emo-row{display:flex;justify-content:space-between;gap:4px;margin:0 0 12px;padding:6px;border-radius:999px;background:var(--m-chip,rgba(0,0,0,.05))}
+.emo-b{flex:1;min-width:0;height:42px;border:0;border-radius:999px;background:transparent;font-size:24px;cursor:pointer;transition:transform .12s}.emo-b:active{transform:scale(1.25)}.emo-b.on{background:rgba(151,63,138,.18)}
 </style>
 </head>
 <body>
@@ -1693,12 +1698,15 @@ function chMetin(t){let h=linkify(t);chKisiler().sort((a,b)=>b.ad.length-a.ad.le
 function chSug(){const ta=$('#ch-t'),box=$('#ch-sug');if(!ta||!box)return;const pos=ta.selectionStart||0;const m=ta.value.slice(0,pos).match(/(^|\s)@([^\s@]{0,20})$/);
  if(!m){box.hidden=true;return;}const q=trLow(m[2]);const L=chKisiler().filter(k=>k.id!==S.uid&&(!q||trLow(k.ad).split(' ').some(w=>w.startsWith(q))||trLow(k.ad).startsWith(q))).slice(0,6);
  if(!L.length){box.hidden=true;return;}box.innerHTML=L.map(k=>`<button type="button" data-act="chAt" data-ad="${esc(k.ad)}">@${esc(k.ad)}</button>`).join('');box.hidden=false;}
+const CH_EMO=['👍','❤️','😂','😮','😢','🙏','👏','✅'];
+function chTepki(m){const t=m.tepki||{};const g={};Object.entries(t).forEach(([u,e])=>{if(e){(g[e]=g[e]||[]).push(u);}});const ks=Object.keys(g);if(!ks.length)return '';
+ return `<div class="msg-r">${ks.map(e=>{const us=g[e];const ben=us.includes(S.uid);const adlar=us.map(u=>{const k=S.kayit[u];return k?nameStd(k.kisaAd||k.adSoyad||''):'';}).filter(Boolean).join(', ');return `<button type="button" class="msg-rc${ben?' on':''}" data-act="chTep" data-id="${esc(m.id)}" data-e="${esc(e)}" aria-label="${esc(e)} ${us.length}${adlar?': '+esc(adlar):''}" title="${esc(adlar)}">${e}${us.length>1?`<span>${us.length}</span>`:''}</button>`;}).join('')}</div>`;}
 function vSohbet(){let h='<div class="chat" id="chat">';let last='',prev=null;
  if(!S.sohbet.length)h+='<p class="empty center" style="margin-top:30px">Henüz mesaj yok. İlk mesajı sen yaz.</p>';
  S.sohbet.forEach(m=>{const d=chDay(m.ts);if(d!==last){h+=`<div class="ch-day"><span>${esc(d)}</span></div>`;last=d;prev=null;}
   const mine=m.u===S.uid;const cont=prev&&prev.u===m.u&&m.ts-prev.ts<5*60000;const can=mine||yetkili();
   const bana=!mine&&((m.etiket||[]).includes(S.uid)||(m.yanit&&m.yanit.u===S.uid));
-  h+=`<div class="msg${mine?' mine':''}${cont&&!m.yanit?' cont':''}${bana?' bana':''}" id="msg-${esc(m.id)}">${!mine&&(!cont||m.yanit)?`<b class="msg-n">${esc(m.ad||'')}</b>`:''}<div class="msg-b" data-act="chMenu" data-id="${esc(m.id)}">${m.yanit?`<span class="msg-q" data-act="chGit" data-id="${esc(m.yanit.id)}"><b>${esc(m.yanit.ad||'')}</b>${esc(m.yanit.m||'')}</span>`:''}<span class="msg-t">${chMetin(m.metin||'')}</span><span class="msg-time">${chTime(m.ts)}</span></div></div>`;prev=m;});
+  h+=`<div class="msg${mine?' mine':''}${cont&&!m.yanit?' cont':''}${bana?' bana':''}" id="msg-${esc(m.id)}">${!mine&&(!cont||m.yanit)?`<b class="msg-n">${esc(m.ad||'')}</b>`:''}<div class="msg-b" data-act="chMenu" data-id="${esc(m.id)}">${m.yanit?`<span class="msg-q" data-act="chGit" data-id="${esc(m.yanit.id)}"><b>${esc(m.yanit.ad||'')}</b>${esc(m.yanit.m||'')}</span>`:''}<span class="msg-t">${chMetin(m.metin||'')}</span><span class="msg-time">${chTime(m.ts)}</span></div>${chTepki(m)}</div>`;prev=m;});
  h+='</div>';
  h+=`<form class="ch-in" data-form="chat" autocomplete="off"><div id="ch-sug" class="ch-sug" hidden></div>${S.chReply?`<div class="ch-rep"><span><b>↩ ${esc(S.chReply.ad||'')}</b>${esc(S.chReply.m||'')}</span><button type="button" class="icon-btn" data-act="chRepX" aria-label="Yanıtı iptal et">${ic('x')}</button></div>`:''}<div class="ch-row"><textarea id="ch-t" data-keep rows="1" maxlength="1000" placeholder="Mesaj yaz… (@ ile etiketle)" aria-label="Mesaj"></textarea><button class="ch-send" type="submit" aria-label="Gönder">${ic('send')}</button></div></form>`;
  return {title:'Sohbet',sub:'Tüm asistan ve uzmanlar',body:h};}
@@ -2076,8 +2084,11 @@ function render(){kyRefresh();const r=route();if(YENI_SRC[r]&&S.state==="ready")
 
 /* ---------- eylemler ---------- */
 const A={};
-A.chMenu=(el,e)=>{if(S.chSwiped&&Date.now()-S.chSwiped<600)return;const a=e&&e.target&&e.target.closest&&e.target.closest('a');if(a){window.open(a.href,'_blank','noopener');return;}const m=S.sohbet.find(x=>x.id===el.dataset.id);if(!m)return;const can=m.u===S.uid||yetkili();openSheet('Mesaj',`<p class="share-pre" style="white-space:pre-wrap">${esc(m.metin)}</p><div class="share-acts"><button class="btn" data-act="chRep" data-id="${esc(m.id)}">↩ Yanıtla</button>${m.u!==S.uid?`<button class="btn ghost" data-act="chAtKisi" data-id="${esc(m.id)}">@ ${esc(nameStd(m.ad||''))} etiketle</button>`:''}<button class="btn ghost" data-act="chCopy" data-id="${esc(m.id)}">${ic('copy')}Kopyala</button>${can?`<button class="btn danger" data-act="chDel" data-id="${esc(m.id)}">${ic('trash')}Mesajı sil</button>`:''}</div>`);};
+A.chMenu=(el,e)=>{if(S.chSwiped&&Date.now()-S.chSwiped<600)return;const a=e&&e.target&&e.target.closest&&e.target.closest('a');if(a){window.open(a.href,'_blank','noopener');return;}const m=S.sohbet.find(x=>x.id===el.dataset.id);if(!m)return;const can=m.u===S.uid||yetkili();const benT=(m.tepki||{})[S.uid];openSheet('Mesaj',`<div class="emo-row" role="group" aria-label="Tepki bırak">${CH_EMO.map(e=>`<button type="button" class="emo-b${benT===e?' on':''}" data-act="chTep" data-id="${esc(m.id)}" data-e="${e}" aria-label="${e} tepkisi">${e}</button>`).join('')}</div><p class="share-pre" style="white-space:pre-wrap">${esc(m.metin)}</p><div class="share-acts"><button class="btn" data-act="chRep" data-id="${esc(m.id)}">↩ Yanıtla</button>${m.u!==S.uid?`<button class="btn ghost" data-act="chAtKisi" data-id="${esc(m.id)}">@ ${esc(nameStd(m.ad||''))} etiketle</button>`:''}<button class="btn ghost" data-act="chCopy" data-id="${esc(m.id)}">${ic('copy')}Kopyala</button>${can?`<button class="btn danger" data-act="chDel" data-id="${esc(m.id)}">${ic('trash')}Mesajı sil</button>`:''}</div>`);};
 A.chRep=el=>{const m=S.sohbet.find(x=>x.id===el.dataset.id);if(!m)return;S.chReply={id:m.id,u:m.u,ad:m.ad||'',m:String(m.metin||'').replace(/\s+/g,' ').slice(0,140)};closeSheet();render();setTimeout(()=>{const ta=$('#ch-t');ta&&ta.focus();},50);};
+A.chTep=async el=>{const m=S.sohbet.find(x=>x.id===el.dataset.id);if(!m||!S.uid)return;const e=el.dataset.e;const t=Object.assign({},m.tepki||{});const yeni=t[S.uid]===e?'':e;if(yeni)t[S.uid]=yeni;else delete t[S.uid];closeSheet();
+ const eski=m.tepki;m.tepki=t;render();try{navigator.vibrate&&navigator.vibrate(10);}catch(x){}
+ try{await S.db.doc('sohbet/'+m.id).update({['tepki.'+S.uid]:yeni});}catch(x){m.tepki=eski;render();toast('Tepki kaydedilemedi.','err');}};
 A.chRepX=()=>{S.chReply=null;render();};
 A.chAt=el=>{const ta=$('#ch-t');if(!ta)return;const pos=ta.selectionStart||ta.value.length;const before=ta.value.slice(0,pos).replace(/@([^\s@]{0,20})$/,'@'+el.dataset.ad+' ');ta.value=before+ta.value.slice(pos);ta.focus();ta.selectionStart=ta.selectionEnd=before.length;$('#ch-sug').hidden=true;};
 A.chAtKisi=el=>{const m=S.sohbet.find(x=>x.id===el.dataset.id);closeSheet();const ta=$('#ch-t');if(!ta||!m)return;ta.value=(ta.value?ta.value.replace(/\s*$/,' '):'')+'@'+nameStd(m.ad||'')+' ';setTimeout(()=>{ta.focus();ta.selectionStart=ta.selectionEnd=ta.value.length;},50);};

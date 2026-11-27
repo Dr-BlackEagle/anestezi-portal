@@ -66,7 +66,12 @@ service cloud.firestore {
       allow create: if onayli() && request.resource.data.u == me()
                     && request.resource.data.metin is string
                     && request.resource.data.metin.size() > 0 && request.resource.data.metin.size() <= 1000;
-      allow update: if false;
+      // Emoji tepkisi: yalnızca 'tepki' haritasındaki kendi anahtarı değişebilir
+      allow update: if onayli()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tepki'])
+                    && request.resource.data.tepki is map
+                    && request.resource.data.tepki.diff(resource.data.get('tepki', {})).affectedKeys().hasOnly([me()])
+                    && (!(me() in request.resource.data.tepki) || (request.resource.data.tepki[me()] is string && request.resource.data.tepki[me()].size() <= 16));
       allow delete: if onayli() && (resource.data.u == me() || yetkili());
     }
 
