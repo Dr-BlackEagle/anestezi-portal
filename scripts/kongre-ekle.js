@@ -1,21 +1,10 @@
-// Tek seferlik: ALPER kayıtları ALİ olarak; Kardelen/Tuğçe/Taha/Ece incelemesi.
+// Tek seferlik: Kardelen→TUĞÇE, Ecesu→ECE liste adı; Kardelen'den önceki başka TUĞÇE kayıtları (Bahçelievler 2024) silinir.
 const admin = require('firebase-admin');
 admin.initializeApp();
 const db = admin.firestore();
-const M = {'NRŞ':'NRŞ','KBB':'KBB'};
 const U = x => String(x || '').toLocaleUpperCase('tr').trim();
 (async () => {
-  const data = JSON.parse(Buffer.from(process.env.EP_DATA || '', 'base64').toString('utf8'));
-  for (const [m, s] of Object.entries(data)) {
-    const ref = db.doc('rotasyon/ay-' + m); const d = (await ref.get()).data(); if (!d) { console.log('yok', m); continue; }
-    const ad = M[s] || s; const sv = d.servisler || []; let x = sv.find(v => v.ad === ad); if (!x) { x = { ad, kisiler: [] }; sv.push(x); }
-    if (!x.kisiler.includes('ALİ')) x.kisiler.push('ALİ');
-    await ref.update({ servisler: sv }); console.log('eklendi', m, ad);
-  }
-  const ara = ['KARDELEN', 'TUĞÇE', 'TAHA', 'ECE', 'ECESU', 'AHMET', 'ALİ'];
   const ky = await db.collection('kayit').get();
-  ky.docs.forEach(d => { const k = d.data(); if (ara.includes(U(k.kisaAd))) console.log('kayıt:', U(k.kisaAd), '·', (k.adSoyad || '').split(' ')[0], '·', k.unvan, '·', k.baslangic || k.basTarih || ''); });
-  const q = await db.collection('rotasyon').get();
-  q.docs.forEach(d => { const v = d.data(); if (d.id === 'birikim') { (v.kisiler || []).forEach((p, i) => { if (ara.some(a => U(p.ad).split(' ').includes(a))) console.log('karne satırı', i, p.ad.split(' ')[0], p.toplam); }); return; }
-    (v.servisler || []).forEach(s => (s.kisiler || []).forEach(k => { if (['KARDELEN','TUĞÇE','TAHA','ECE','ECESU'].includes(U(k))) console.log('ay', d.id, U(k), s.ad); })); });
+  for (const d of ky.docs) { const k = d.data(); const y = U(k.kisaAd) === 'KARDELEN' ? 'TUĞÇE' : U(k.kisaAd) === 'ECESU' ? 'ECE' : null; if (y) { await d.ref.update({ kisaAd: y }); console.log('liste adı:', U(k.kisaAd), '→', y); } }
+  for (const m of ['2024-04', '2024-10']) { const ref = db.doc('rotasyon/ay-' + m); const v = (await ref.get()).data(); const sv = (v.servisler || []).map(s => ({ ...s, kisiler: (s.kisiler || []).filter(k => U(k) !== 'TUĞÇE') })).filter(s => s.kisiler.length); await ref.update({ servisler: sv }); console.log('temizlendi', m); }
 })().catch(e => { console.error(e); process.exit(1); });
